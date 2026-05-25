@@ -1,2 +1,2 @@
-# Konstantin-Urikh
+# Konstantin Urikh
 Analyst Potfolio 
