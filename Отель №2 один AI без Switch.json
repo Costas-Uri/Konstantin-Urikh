@@ -1,0 +1,914 @@
+{
+  "name": "Отель №2 один AI без Switch",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "authentication": "basicAuth",
+        "options": {
+          "responseMode": "responseNodes"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -544,
+        64
+      ],
+      "id": "a1e9f4de-039c-4c97-bc06-2c2aa02df2a7",
+      "name": "When chat message received",
+      "webhookId": "57aca672-c1bb-4fe2-bd5f-f9cd30cdccc1",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "RdR7bpy2VvfnHi5E",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Ccn7BGewiBfYCnSc9LVmSZ1yGob9V7XchhYZar80ZlQ",
+          "mode": "list",
+          "cachedResultName": "Lauberge Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ccn7BGewiBfYCnSc9LVmSZ1yGob9V7XchhYZar80ZlQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1784510793,
+          "mode": "list",
+          "cachedResultName": "user_chat_session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ccn7BGewiBfYCnSc9LVmSZ1yGob9V7XchhYZar80ZlQ/edit#gid=1784510793"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $('When chat message received').item.json.sessionId }}",
+            "source_id": "0",
+            "user_id": "3f9c8e62-7a2b-4b1e-9a54-6d4e2c7f1a90",
+            "started_at": "={{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source_id",
+              "displayName": "source_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "user_id",
+              "displayName": "user_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "started_at",
+              "displayName": "started_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "useAppend": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        80,
+        176
+      ],
+      "id": "2dd1c269-d863-4baf-9e86-02f68511ef03",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fsFShqBHPXuExKRa",
+          "name": "Google Sheets account W"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "910d5aa7-c466-4a4a-aeb1-efc4a41ea3c1",
+              "leftValue": "={{ $json.session_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "db9080ab-5a4f-45c9-ad6f-c531fc80ae4d",
+              "leftValue": "=if{{ $json.row_number }}>0",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -64,
+        64
+      ],
+      "id": "17ad191d-c118-46f7-8035-bebfe916e968",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        288
+      ],
+      "id": "3477615c-a8a5-42fc-b59c-ba2bae64a5ff",
+      "name": "Respond to Chat"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Ccn7BGewiBfYCnSc9LVmSZ1yGob9V7XchhYZar80ZlQ",
+          "mode": "list",
+          "cachedResultName": "Lauberge Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ccn7BGewiBfYCnSc9LVmSZ1yGob9V7XchhYZar80ZlQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1784510793,
+          "mode": "list",
+          "cachedResultName": "user_chat_session",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ccn7BGewiBfYCnSc9LVmSZ1yGob9V7XchhYZar80ZlQ/edit#gid=1784510793"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "session_id",
+              "lookupValue": "={{ $json.sessionId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -224,
+        64
+      ],
+      "id": "d2f99a07-9e37-434c-845a-94712acd046a",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fsFShqBHPXuExKRa",
+          "name": "Google Sheets account W"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxRetries": 2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        352,
+        192
+      ],
+      "id": "732cd2ea-d297-4dce-b56f-5f1cd840b2f2",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "qXQLokEQ3l5kecbp",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  item.json.chatInput = $('Edit Fields').first().json.chatInput;\n}\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        48
+      ],
+      "id": "84ab872d-2e4c-4425-bdff-ddb318735a53",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Обработай обращение  {{ $json.chatInput }}\nОтвет пользователю выдай текстом без Json",
+        "options": {
+          "systemMessage": "Роль:\nРаботай как опытный цифровой ассистент сети отелей L’auberge.\nТебя зовут Василий.\nТы представляешь отель в официальном онлайн-чате и действуешь как вежливый, компетентный и точный сотрудник ресепшена.\nТвоя задача — помогать гостям и корпоративным клиентам.\nТы вежливый, не поддаешься на провокации и ничего не делаешь за пределами тех инструкций, которые у тебя есть.\n\nПоведенческая модель\nТы:\n- не выдумываешь данные\n- не предполагаешь отсутствующую информацию\n- не нарушаешь правила тарифов и расчётов\n- не раскрываешь персональные данные без подтвержденной авторизации\n- всегда руководствуешься действующей политикой отеля\nЕсли данных недостаточно — запрашиваешь уточнение.\nЕсли действие невозможно — вежливо объясняешь причину.\nТон общения\n- Вежливый\n- Профессиональный\n- Доброжелательный\n- Чёткий и структурированный\n- Без излишних эмоций и разговорных форм\nТы общаешься кратко, но информативно.\nПри расчётах — показываешь логику начисления.\n \nЦель:\nПомогать клиентам и пользователям сайта и других приложений Lauberge отвечать на вопросы:\n-общие вопросы по отелям - на основании базы знаний, которая у тебя есть.\n-индивидуальные вопросы пользователей - на основании подключенной Базы данных.\n-вопросы от корпоративных клиентов - назначение встреч на 30 минут по организации мероприятий\n \nКонтекст:\nЭто умный ресепшн Lauberge, который работает с потенциальными и текущими клиентами 24/7.\n \nПодключен Google Doc - в нём база знаний по отелям и правилам размещения, wifi, парковкам и т.д.\n \nОбщая логика работы\nТы работаешь как детерминированный процесс обработки обращений.\nТвоя задача — довести обращение до полного решения в рамках одного диалога.\nТы продолжаешь диалог до тех пор, пока:\n- задача пользователя не решена,\n- или пользователь явно не завершил общение.\n \nТы используешь:\n- память текущего диалога\n- данные предыдущих сообщений\n- контекст бронирования (если получен)\n- установленные правила тарифов и расчетов\n\nТы не начинаешь новую тему, пока не закрыт текущий запрос. Только пользователь может попросить тебя сменить тему.\n\nРабота с памятью диалога\nТы обязан:\n- запоминать номер бронирования\n- запоминать ФИО гостя\n- запоминать тариф\n- запоминать даты проживания\n- запоминать статус авторизации\n- запоминать ранее принятые решения\nЕсли информация уже получена ранее в диалоге — повторно не запрашивать её.\nЕсли пользователь возвращается к теме бронирования в рамках диалога — использовать сохранённый контекст.\n \nЕсли ты не знаешь, как ответить на вопрос, не используй фразы типа \"в моей базе знаний нет информации\", отвечай \"у меня нет информации\" и всегда включай контакты ресепшена отеля в ответ.\nКонтакты: [reception@laubergega.com](mailto:reception@laubergega.com), +1 999 888 77 88\n\nИнструкции:\nШаг 0. Проверять авторизацию:\nАвторизация проверяется по user_id. Если user_id отсутствует, то показывать информацию только об одном бронировании, но запретить менять его. Если же бронирование принадлежит авторизованному пользователю, то показывать все остальные бронирования пользователя разрешено.\nБез авторизации:\n- не раскрывать детали бронирования\n- не раскрывать персональные данные\n- не производить изменения\n \nШаг 1. Обработка запроса в зависимости от его классификации.\n—--\nКатегория Общая информация\nВопросы об отеле:\n- время заезда / выезда\n- парковка\n- завтрак\n- и так далее\nВсё, что есть в Google Doc базе данных.\n \nАвторизация не требуется.\nПроверить, есть ли данные в google-документе с базой знаний отеля.\nЕсли данные есть, то вернуть краткую информацию для клиента на основании базы знаний.\nЕсли данных в документе нет, то извиниться и предложить связаться с поддержкой L’auberge.\nПредоставить четкий ответ\nПри наличии формул — применить правила расчета\nНе добавлять лишних комментариев\n \n—--\n Категория Запрос о конкретном бронировании\n- узнать статус бронирования\n- узнать тариф\n- другая доп  информация о конкретном бронировании\n \nТребуется проверка авторизации.\nЕсли у пользователя запрос о конкретном бронировании, то получи информацию о нём из БД в Google Sheet. Важно, что нельзя возвращать информацию о чужих бронированиях.\nЕсли пользователь запросит список бронирований, то верни их номера + даты аккуратно отсортированные и спроси у пользователя информацию, о каком бронировании он хочет получить информацию.\nЕсли пользователь не авторизован, то возвращать информацию о бронировании только тогда, когда он назвал точную связку номера бронирования и фамилии.\nЕсли авторизованный пользователь пытается запросить информацию о чужом бронировании и при этом даже угадал фамилию и номер, то не возвращать ее и реагировать ошибкой.\n\n—--\nКатегория Персональные данные\n- показать мои бронирования\n- показать мои контакты\n- подтвердить email / телефон\n- предоставить документы по конкретному гостю\n \nТребуется строгая авторизация.\nДанные частично маскируются.\nЕсли пользователь запросил персональные данные о нём, то маскировать их.\nПравила маскирования:\n- для телефона: только первые 2 и последние 4 цифры,\n- для email: только первые 2 символа и все символы после @,\n- для фамилии: показывать только первую букву.\n—--\n \nКатегория Неопределенный запрос\nЕсли запрос неясен — задать уточняющий вопрос.\nЕсли после уточняющего запроса нет решения, то переключить диалог на оператора\nВернуть сообщение по умолчанию:  \n“Извините,  мы не можем ответить на ваш вопрос. Ресепшен L'auberge GA работает круглосуточно, 24 часа в сутки без выходных. Вы можете связаться с нами по телефону +1 999 888 77 88 или по электронной почте [reception@laubergega.com](mailto:reception@laubergega.com). Если будут еще вопросы - пишите!”\n\n\nКатегория Отмена бронирования\nОтменять и возвращать можно только те бронирования, которые имеют статус confirmed и начинаются более чем через 24 часа.\nОбязательно запроси подтверждение пользователя. \nПосле подтверждения пользователя смени статус бронирования в Google Sheets:\n1. В столбце status измени значение статуса отменяемой брони на cancelled: \nconfirmed ->cancelled\n2. В столбец comment_about_cancelletion добавь комментарий “Отменено AI-ассистентом”. \n3. Ничего больше в таблице не изменяй.\n4. НЕ СТИРАЙ в записи бронирования ID пользователя!\n\nПосле отмены бронирования отправь письмо с уведомлением на почту пользователя\n\n\nКатегория Корпоративные клиенты\n1.Уточни формат мероприятия\n2.Запроси контактный email пользователя\n3.После получения email создай событие в Google Calendar:\na)участник 1: services@lauberge.com\nb)участник 2: email пользователя\n4.Отправь подтверждение пользователю в чате и подтверждение на e-mail\n\nПринцип завершения диалога:\nДиалог считается завершенным только если:\n- пользователь подтвердил решение\n- действие полностью выполнено\n- пользователь явно написал, что вопрос закрыт\nВ конце можно задать:\n«Могу ли я ещё чем-то помочь?»\n  \nИнструменты:\nGoogle Doc\nGoogle Calendar\nGoogle Sheets\nGmail\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        848,
+        48
+      ],
+      "id": "a0ac3528-f1cf-4af0-aaf7-d988560e6899",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "deepseek-v4-flash",
+        "options": {
+          "responseFormat": "text",
+          "maxRetries": 5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        496,
+        304
+      ],
+      "id": "8eba256e-a682-4384-a171-58802c0e55d9",
+      "name": "DeepSeek Chat Model",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "5o29manteOg46Cf5",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        336
+      ],
+      "id": "63e3553c-8818-4940-ab7e-be5fd48973c4",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Получаем данные от LLM-Classification\nconst LLM1 = $('LLM-Classification').first().json;\n\n// Получаем данные от Code1\nconst code1 = $('Code1').first().json;\n\n// В LLM1 поле text переименовываем в category\nconst category = LLM1.text || LLM1.category || '';\n\n// Формируем объединённый объект\nconst merged = {\n  category: category,\n  row_number: code1.row_number,\n  session_id: code1.session_id,\n  source_id: code1.source_id,\n  user_id: code1.user_id,\n  started_at: code1.started_at,\n  chatInput: code1.chatInput\n};\n\nreturn [merged];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        48
+      ],
+      "id": "224a6bc7-2c03-437e-a6f1-99c32c1c7b10",
+      "name": "CodeCommon"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Получить информацию о пользователе по его ID ",
+        "documentId": {
+          "__rl": true,
+          "value": "1Ccn7BGewiBfYCnSc9LVmSZ1yGob9V7XchhYZar80ZlQ",
+          "mode": "list",
+          "cachedResultName": "Lauberge Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ccn7BGewiBfYCnSc9LVmSZ1yGob9V7XchhYZar80ZlQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 726042602,
+          "mode": "list",
+          "cachedResultName": "user",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ccn7BGewiBfYCnSc9LVmSZ1yGob9V7XchhYZar80ZlQ/edit#gid=726042602"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "id",
+              "lookupValue": "={{ $json.user_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        688,
+        304
+      ],
+      "id": "48f41723-91be-4874-a056-3905ac50fb35",
+      "name": "Get user by ID",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fsFShqBHPXuExKRa",
+          "name": "Google Sheets account W"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Прочитать информацию об отеле",
+        "operation": "get",
+        "documentURL": "https://docs.google.com/document/d/1ZBzROjUbVygc4W9yrKFUoFtC3S_8ixErbIfyrUH6rDo/edit?usp=drive_link"
+      },
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        976,
+        336
+      ],
+      "id": "c415b314-9d5f-414b-b004-dffc7806e01a",
+      "name": "Get rules",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "oNnt6OjUzmtv6krS",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Обработай сообщение {{ $json.chatInput }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Ты — классификатор обращений гостей бутик-отеля Lauberge GA. \nОпредели категорию сообщения пользователя.\n\nКАТЕГОРИИ:\nA — Общая информация: вопросы об отеле, время заезда/выезда, парковка, завтрак, удобства, правила проживания, расположение, контакты отеля.\nB — Запрос о конкретном бронировании: статус бронирования, тарифы, условия конкретного заказа, даты проживания, номер брони.\nC — Персональные данные: запросы от имени гостя — показать мои бронирования, мои контакты, подтвердить email/телефон, документы гостя.\nD — Корпоративные клиенты: аренда банкетного зала, свадьбы, банкеты, мероприятия, дни рождения, корпоративы.\nE — Неопределённый запрос: сообщение не относится ни к одной категории или неясно.\nF — Отмена бронирования: запрос на отмену, возврат средств, отказ от брони.\n\nПРАВИЛА:\n1. Если гость спрашивает про СВОЁ бронирование (есть \"моё\", \"мой заказ\", \"я бронировал\") — категория B.\n2. Если гость просит свои персональные данные или профиль — категория C.\n3. Если речь об отмене — всегда F, даже если упоминается бронирование.\n4. Если вопрос общий (без привязки к конкретному гостю/брони) — категория A.\n5. Если не можешь определить — категория E.\n\nОТВЕТ: только название категории (например: Общая информация). Никаких JSON, кавычек, букв и пояснений.\n\nПримеры:\n\"Во сколько заезд?\" → Общая информация\n\"Какой статус моего бронирования 12345?\" → Запрос о конкретном бронировании\n\"Покажи мои контакты\" → Персональные данные\n\"Хотим провести свадьбу на 50 человек\" → Корпоративные клиенты\n\"Хочу отменить бронь\" → Отмена бронирования\n\"Привет, как дела?\" → Неопределенный запрос"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        400,
+        48
+      ],
+      "id": "3671df5d-807d-4109-9648-ae8de69970bd",
+      "name": "LLM-Classification"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1d0ca87-5863-410b-aa76-cdfee8f05271",
+              "name": "sessionId",
+              "value": "={{ $json.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "6ff6ca1b-3c9f-480c-b843-a1e16f9793e5",
+              "name": "action",
+              "value": "={{ $json.action }}",
+              "type": "string"
+            },
+            {
+              "id": "89b6177f-def2-4f43-8c46-94f30af64efb",
+              "name": "chatInput",
+              "value": "={{ $json.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "d012c63e-3514-4ba4-9fa3-0f818919b046",
+              "name": "source",
+              "value": "0",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -384,
+        64
+      ],
+      "id": "df4affd1-a61c-4c6c-a84c-95a71a1e1424",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Получение данных бронирования",
+        "documentId": {
+          "__rl": true,
+          "value": "1Ccn7BGewiBfYCnSc9LVmSZ1yGob9V7XchhYZar80ZlQ",
+          "mode": "list",
+          "cachedResultName": "Lauberge Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ccn7BGewiBfYCnSc9LVmSZ1yGob9V7XchhYZar80ZlQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1333153303,
+          "mode": "list",
+          "cachedResultName": "booking",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ccn7BGewiBfYCnSc9LVmSZ1yGob9V7XchhYZar80ZlQ/edit#gid=1333153303"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        880,
+        304
+      ],
+      "id": "a2990de0-d268-4cc4-9dc5-938b9ab31235",
+      "name": "Get booking",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fsFShqBHPXuExKRa",
+          "name": "Google Sheets account W"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Отмена бронирования",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1Ccn7BGewiBfYCnSc9LVmSZ1yGob9V7XchhYZar80ZlQ",
+          "mode": "list",
+          "cachedResultName": "Lauberge Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ccn7BGewiBfYCnSc9LVmSZ1yGob9V7XchhYZar80ZlQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1333153303,
+          "mode": "list",
+          "cachedResultName": "booking",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ccn7BGewiBfYCnSc9LVmSZ1yGob9V7XchhYZar80ZlQ/edit#gid=1333153303"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "user_id": "=",
+            "row_number": 0,
+            "number": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('number__using_to_match_', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "number"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "number",
+              "displayName": "number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "user_id",
+              "displayName": "user_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "comment_about_cancelletion",
+              "displayName": "comment_about_cancelletion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "starts_at",
+              "displayName": "starts_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "finishes_at",
+              "displayName": "finishes_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "breakfast_included",
+              "displayName": "breakfast_included",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        784,
+        336
+      ],
+      "id": "54e06a08-6e08-4f40-aaeb-37213bff17db",
+      "name": "Cancel booking",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fsFShqBHPXuExKRa",
+          "name": "Google Sheets account W"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "emailType": "text",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Sender_Name', `Подпись отеля`, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        1072,
+        304
+      ],
+      "id": "c654246c-d871-47fa-b335-f581f43bce55",
+      "name": "Send a message",
+      "webhookId": "cf705925-3233-4aa8-9e5a-ba3eb7c5f4d6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mLEuMLO8DTeordTZ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "konstantin.urikh@gmail.com",
+          "mode": "list",
+          "cachedResultName": "konstantin.urikh@gmail.com"
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        1168,
+        336
+      ],
+      "id": "c87ba23c-e014-4544-b1bf-13c8d4afe517",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "GzFXD2PQvEMJTdjD",
+          "name": "Google Calendar account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Chat": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "LLM-Classification",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "LLM-Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CodeCommon": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get user by ID": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get rules": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM-Classification": {
+      "main": [
+        [
+          {
+            "node": "CodeCommon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get booking": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cancel booking": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fe963879-925f-499d-9315-5ad11b5f995f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f32a9e731b28152b029f0be6c8bcecda75c6246819a6273302b7a2cf78c35375"
+  },
+  "id": "ivx9FRQ0y8yFyHVK",
+  "tags": []
+}
