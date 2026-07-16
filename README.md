@@ -17,6 +17,7 @@
 Пример [Построения схемы в n8n](https://github.com/Costas-Uri/Konstantin-Urikh/wiki/n8n)
 
 Пример создания приложения с использованием ИИ: [ИИ Генератор PlantUML](https://uml-generator-uri.vercel.app)
+Для входа в приложение запросите у меня пароль.
 
 
 
