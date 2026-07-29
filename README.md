@@ -1,4 +1,4 @@
-# Konstantin Urikh Potfolio 
+# Konstantin Urikh Portfolio 
 
 Здесь собраны некоторые примеры моих работ в качестве аналитика
 
