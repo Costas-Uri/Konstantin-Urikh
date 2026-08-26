@@ -1,0 +1,2568 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lauberge GA — Бронирование номеров</title>
+    <style>
+        /* ============================================
+           БАЗОВЫЕ СТИЛИ И ПЕРЕМЕННЫЕ
+           ============================================ */
+        :root {
+            --color-bg: #ecf7f6;
+            --color-primary: #a5dbce;
+            --color-primary-dark: #8bc4b3;
+            --color-primary-light: #c8e8df;
+            --color-white: #ffffff;
+            --color-black: #1a1a1a;
+            --color-text: #2d3436;
+            --color-text-light: #636e72;
+            --color-border: #dfe6e9;
+            --color-error: #e17055;
+            --color-success: #00b894;
+            --color-warning: #fdcb6e;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        /* ============================================
+           ШАПКА ПРИЛОЖЕНИЯ
+           ============================================ */
+        .app-header {
+            background: var(--color-white);
+            padding: 12px 16px;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--color-black);
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--color-primary);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--color-white);
+            font-size: 16px;
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-subtitle {
+            font-size: 10px;
+            color: var(--color-text-light);
+            font-weight: 400;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid var(--color-border);
+            background: var(--color-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-icon:hover {
+            background: var(--color-bg);
+        }
+
+        /* ============================================
+           ИНДИКАТОР ШАГОВ
+           ============================================ */
+        .steps-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: var(--color-white);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--color-text-light);
+        }
+
+        .step-item.active {
+            color: var(--color-primary-dark);
+            font-weight: 600;
+        }
+
+        .step-item.completed {
+            color: var(--color-success);
+        }
+
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            border: 2px solid var(--color-border);
+        }
+
+        .step-item.active .step-number {
+            border-color: var(--color-primary);
+            background: var(--color-primary);
+            color: var(--color-white);
+        }
+
+        .step-item.completed .step-number {
+            border-color: var(--color-success);
+            background: var(--color-success);
+            color: var(--color-white);
+        }
+
+        .step-line {
+            width: 30px;
+            height: 2px;
+            background: var(--color-border);
+            margin: 0 8px;
+        }
+
+        .step-line.completed {
+            background: var(--color-success);
+        }
+
+        /* ============================================
+           ОСНОВНОЙ КОНТЕНТ
+           ============================================ */
+        .main-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ============================================
+           ЭКРАН 1: ПОИСК ОТЕЛЕЙ
+           ============================================ */
+        .search-hero {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+            border-radius: var(--radius-lg);
+            padding: 24px 20px;
+            margin-bottom: 20px;
+        }
+
+        .search-hero h1 {
+            color: var(--color-white);
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .search-hero p {
+            color: rgba(255,255,255,0.85);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .search-form {
+            background: var(--color-white);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-text-light);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            color: var(--color-text);
+            background: var(--color-white);
+            transition: var(--transition);
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(165, 219, 206, 0.3);
+        }
+
+        .form-input.error,
+        .form-select.error {
+            border-color: var(--color-error);
+            box-shadow: 0 0 0 3px rgba(225, 112, 85, 0.15);
+        }
+
+        .error-message {
+            font-size: 12px;
+            color: var(--color-error);
+            margin-top: 4px;
+            display: none;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .guests-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .guest-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1.5px solid var(--color-border);
+            background: var(--color-white);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            color: var(--color-text);
+        }
+
+        .guest-btn:hover:not(:disabled) {
+            background: var(--color-primary-light);
+            border-color: var(--color-primary);
+        }
+
+        .guest-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .guest-count {
+            font-size: 16px;
+            font-weight: 600;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .guest-label {
+            font-size: 12px;
+            color: var(--color-text-light);
+            margin-left: 4px;
+        }
+
+        .guests-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        /* Фильтры в виде чипсов */
+        .filters-section {
+            margin-top: 16px;
+        }
+
+        .filters-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 10px;
+        }
+
+        .chips-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1.5px solid var(--color-border);
+            background: var(--color-white);
+            font-size: 13px;
+            cursor: pointer;
+            transition: var(--transition);
+            user-select: none;
+        }
+
+        .chip:hover {
+            border-color: var(--color-primary);
+        }
+
+        .chip.active {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: var(--color-white);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px 24px;
+            background: var(--color-primary);
+            color: var(--color-white);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 16px;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--color-primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ============================================
+           ЭКРАН 2: РЕЗУЛЬТАТЫ ПОИСКА
+           ============================================ */
+        .search-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .search-summary h2 {
+            font-size: 20px;
+            color: var(--color-black);
+        }
+
+        .search-summary-info {
+            font-size: 13px;
+            color: var(--color-text-light);
+        }
+
+        .edit-search-btn {
+            padding: 8px 16px;
+            background: var(--color-white);
+            border: 1.5px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--color-text);
+        }
+
+        .edit-search-btn:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary-dark);
+        }
+
+        /* Панель сортировки и фильтров */
+        .sort-filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .sort-select {
+            padding: 8px 12px;
+            border: 1.5px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            background: var(--color-white);
+            color: var(--color-text);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .filter-chip-sm {
+            padding: 6px 12px;
+            border-radius: 16px;
+            border: 1.5px solid var(--color-border);
+            background: var(--color-white);
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: var(--transition);
+        }
+
+        .filter-chip-sm.active {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: var(--color-white);
+        }
+
+        /* Карточки отелей */
+        .hotels-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .hotel-card {
+            background: var(--color-white);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .hotel-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .hotel-card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .hotel-card-content {
+            padding: 16px;
+        }
+
+        .hotel-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .hotel-card-name {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--color-black);
+        }
+
+        .hotel-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--color-primary);
+            color: var(--color-white);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .hotel-rating-star {
+            font-size: 11px;
+        }
+
+        .hotel-location {
+            font-size: 13px;
+            color: var(--color-text-light);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .hotel-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .hotel-tag {
+            font-size: 11px;
+            padding: 3px 8px;
+            background: var(--color-bg);
+            color: var(--color-text-light);
+            border-radius: 4px;
+        }
+
+        .hotel-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .hotel-price {
+            font-size: 13px;
+            color: var(--color-text-light);
+        }
+
+        .hotel-price strong {
+            font-size: 20px;
+            color: var(--color-black);
+        }
+
+        .btn-details {
+            padding: 8px 18px;
+            background: var(--color-primary);
+            color: var(--color-white);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-details:hover {
+            background: var(--color-primary-dark);
+        }
+
+        /* ============================================
+           ЭКРАН 3: КАРТОЧКА ОТЕЛЯ И ВЫБОР НОМЕРА
+           ============================================ */
+        .hotel-detail-header {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .hotel-detail-gallery {
+            width: 100%;
+            height: 260px;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .hotel-detail-gallery img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-thumbnails {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .gallery-thumb {
+            width: 70px;
+            height: 50px;
+            border-radius: var(--radius-sm);
+            object-fit: cover;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .gallery-thumb.active {
+            border-color: var(--color-primary);
+        }
+
+        .hotel-detail-info h2 {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+
+        .hotel-detail-rating {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-primary-dark);
+            margin-bottom: 8px;
+        }
+
+        .hotel-detail-address {
+            font-size: 14px;
+            color: var(--color-text-light);
+            margin-bottom: 16px;
+        }
+
+        .amenities-section {
+            margin-bottom: 24px;
+        }
+
+        .amenities-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .amenities-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .amenity-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--color-text);
+            padding: 8px 10px;
+            background: var(--color-white);
+            border-radius: var(--radius-sm);
+        }
+
+        .amenity-icon {
+            font-size: 16px;
+        }
+
+        /* Карточки номеров */
+        .rooms-section {
+            margin-top: 24px;
+        }
+
+        .rooms-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .room-card {
+            background: var(--color-white);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 16px;
+            display: grid;
+            grid-template-columns: 140px 1fr;
+        }
+
+        .room-card-image {
+            width: 100%;
+            height: 100%;
+            min-height: 140px;
+            object-fit: cover;
+        }
+
+        .room-card-content {
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .room-card-name {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .room-card-conditions {
+            font-size: 12px;
+            color: var(--color-text-light);
+            margin-bottom: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .condition-tag {
+            padding: 2px 8px;
+            background: var(--color-bg);
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .condition-tag.breakfast {
+            background: #ffeaa7;
+            color: #2d3436;
+        }
+
+        .condition-tag.free-cancel {
+            background: #dfe6e9;
+            color: #2d3436;
+        }
+
+        .room-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-price {
+            font-size: 13px;
+            color: var(--color-text-light);
+        }
+
+        .room-price strong {
+            font-size: 18px;
+            color: var(--color-black);
+            display: block;
+        }
+
+        .btn-select-room {
+            padding: 8px 20px;
+            background: var(--color-primary);
+            color: var(--color-white);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-select-room:hover {
+            background: var(--color-primary-dark);
+        }
+
+        /* ============================================
+           ЭКРАН 4: ПОДТВЕРЖДЕНИЕ БРОНИРОВАНИЯ
+           ============================================ */
+        .booking-summary {
+            background: var(--color-white);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 20px;
+        }
+
+        .booking-summary-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .booking-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+
+        .booking-detail-label {
+            color: var(--color-text-light);
+        }
+
+        .booking-detail-value {
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .booking-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0 0;
+            margin-top: 10px;
+            border-top: 2px solid var(--color-border);
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .booking-total-value {
+            color: var(--color-primary-dark);
+        }
+
+        .contact-form {
+            background: var(--color-white);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 20px;
+        }
+
+        .contact-form h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+
+        .guests-list {
+            margin-top: 16px;
+        }
+
+        .guest-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: var(--color-bg);
+            border-radius: var(--radius-sm);
+        }
+
+        .guest-item-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            color: var(--color-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .guest-item-fields {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .guest-item-fields input {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1.5px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+        }
+
+        .guest-item-fields input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .btn-remove-guest {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: var(--color-error);
+            color: var(--color-white);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .btn-add-guest {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1.5px dashed var(--color-primary);
+            border-radius: var(--radius-sm);
+            color: var(--color-primary-dark);
+            font-size: 13px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+            transition: var(--transition);
+        }
+
+        .btn-add-guest:hover {
+            background: var(--color-primary-light);
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 20px 0;
+            font-size: 13px;
+        }
+
+        .checkbox-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--color-primary);
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .checkbox-row a {
+            color: var(--color-primary-dark);
+            text-decoration: underline;
+        }
+
+        /* ============================================
+           СОСТОЯНИЯ: LOADING, EMPTY, ERROR, SUCCESS
+           ============================================ */
+        .state-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .state-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .state-description {
+            font-size: 14px;
+            color: var(--color-text-light);
+            max-width: 300px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--color-border);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Сообщение об успехе бронирования */
+        .success-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .success-overlay.active {
+            display: flex;
+        }
+
+        .success-modal {
+            background: var(--color-white);
+            border-radius: var(--radius-lg);
+            padding: 32px 24px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            animation: scaleIn 0.3s ease;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--color-success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 32px;
+            color: var(--color-white);
+        }
+
+        .success-modal h3 {
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        .success-modal p {
+            font-size: 14px;
+            color: var(--color-text-light);
+            margin-bottom: 8px;
+        }
+
+        .booking-number {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-primary-dark);
+            background: var(--color-bg);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            display: inline-block;
+            margin: 12px 0 20px;
+        }
+
+        /* ============================================
+           TOAST-УВЕДОМЛЕНИЯ
+           ============================================ */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 16px;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            animation: slideInRight 0.3s ease;
+            max-width: 320px;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast.success {
+            background: var(--color-success);
+            color: var(--color-white);
+        }
+
+        .toast.error {
+            background: var(--color-error);
+            color: var(--color-white);
+        }
+
+        .toast.warning {
+            background: var(--color-warning);
+            color: var(--color-black);
+        }
+
+        /* ============================================
+           НАВИГАЦИОННЫЕ КНОПКИ
+           ============================================ */
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-secondary {
+            padding: 14px 24px;
+            background: var(--color-white);
+            color: var(--color-text);
+            border: 1.5px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary-dark);
+        }
+
+        /* ============================================
+           АДАПТИВНОСТЬ: ПЛАНШЕТ (768px)
+           ============================================ */
+        @media (min-width: 768px) {
+            .main-content {
+                padding: 24px;
+            }
+
+            .search-hero {
+                padding: 32px 28px;
+            }
+
+            .search-hero h1 {
+                font-size: 28px;
+            }
+
+            .search-form {
+                padding: 24px;
+            }
+
+            .form-row-3 {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 16px;
+            }
+
+            .hotels-list {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+
+            .hotel-card-image {
+                height: 180px;
+            }
+
+            .room-card {
+                grid-template-columns: 180px 1fr;
+            }
+
+            .amenities-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .steps-indicator {
+                padding: 20px;
+            }
+
+            .step-line {
+                width: 60px;
+            }
+        }
+
+        /* ============================================
+           АДАПТИВНОСТЬ: ДЕСКТОП (1280px)
+           ============================================ */
+        @media (min-width: 1280px) {
+            .main-content {
+                padding: 32px 40px;
+            }
+
+            .search-hero {
+                padding: 40px 36px;
+            }
+
+            .hotels-list {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .hotel-detail-gallery {
+                height: 360px;
+            }
+
+            .rooms-list-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+
+            .room-card {
+                margin-bottom: 0;
+            }
+        }
+
+        /* ============================================
+           ДОПОЛНИТЕЛЬНЫЕ УТИЛИТЫ
+           ============================================ */
+        .text-center { text-align: center; }
+        .mb-16 { margin-bottom: 16px; }
+        .mb-24 { margin-bottom: 24px; }
+        .mt-16 { margin-top: 16px; }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            border: 0;
+        }
+
+        /* Фокус для доступности */
+        *:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <!-- ============================================
+         ШАПКА ПРИЛОЖЕНИЯ
+         ============================================ -->
+    <header class="app-header">
+        <a class="logo" onclick="goToScreen(0)" aria-label="На главную Lauberge GA">
+            <div class="logo-icon">L</div>
+            <div>
+                <div class="logo-text">Lauberge GA</div>
+                <div class="logo-subtitle">Бутик-отели</div>
+            </div>
+        </a>
+        <div class="header-actions">
+            <button class="btn-icon" aria-label="Избранное">♡</button>
+            <button class="btn-icon" aria-label="Профиль">👤</button>
+        </div>
+    </header>
+
+    <!-- ============================================
+         ИНДИКАТОР ШАГОВ
+         ============================================ -->
+    <nav class="steps-indicator" id="stepsIndicator" aria-label="Прогресс бронирования">
+        <div class="step-item active" data-step="0">
+            <span class="step-number">1</span>
+            <span class="step-label">Поиск</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item" data-step="1">
+            <span class="step-number">2</span>
+            <span class="step-label">Отели</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item" data-step="2">
+            <span class="step-number">3</span>
+            <span class="step-label">Номер</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item" data-step="3">
+            <span class="step-number">4</span>
+            <span class="step-label">Подтверждение</span>
+        </div>
+    </nav>
+
+    <!-- ============================================
+         КОНТЕЙНЕР TOAST-УВЕДОМЛЕНИЙ
+         ============================================ -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ============================================
+         ОСНОВНОЙ КОНТЕНТ
+         ============================================ -->
+    <main class="main-content">
+
+        <!-- ========================================
+             ЭКРАН 1: ПОИСК ОТЕЛЕЙ
+             ======================================== -->
+        <section class="screen active" id="screen-search" aria-label="Поиск отелей">
+            <div class="search-hero">
+                <h1>Найдите идеальный отель</h1>
+                <p>Бронируйте номера в бутик-отелях Lauberge GA напрямую</p>
+
+                <div class="search-form">
+                    <!-- Поле "Город" -->
+                    <div class="form-group">
+                        <label class="form-label" for="citySelect">Город</label>
+                        <select class="form-select" id="citySelect" aria-label="Выберите город">
+                            <option value="">Выберите город</option>
+                            <option value="moscow">Москва</option>
+                            <option value="spb">Санкт-Петербург</option>
+                            <option value="kostroma">Кострома</option>
+                            <option value="kazan">Казань</option>
+                        </select>
+                        <div class="error-message" id="cityError">Выберите город</div>
+                    </div>
+
+                    <!-- Даты заезда и выезда -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="checkIn">Заезд</label>
+                            <input type="date" class="form-input" id="checkIn" aria-label="Дата заезда">
+                            <div class="error-message" id="checkInError">Укажите дату заезда</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="checkOut">Выезд</label>
+                            <input type="date" class="form-input" id="checkOut" aria-label="Дата выезда">
+                            <div class="error-message" id="checkOutError">Укажите дату выезда</div>
+                        </div>
+                    </div>
+
+                    <!-- Количество гостей -->
+                    <div class="form-group">
+                        <label class="form-label">Гости</label>
+
+                        <div class="guests-row">
+                            <span>Взрослые</span>
+                            <div class="guests-control">
+                                <button class="guest-btn" id="adultsMinus" aria-label="Уменьшить количество взрослых" disabled>−</button>
+                                <span class="guest-count" id="adultsCount">1</span>
+                                <button class="guest-btn" id="adultsPlus" aria-label="Увеличить количество взрослых">+</button>
+                            </div>
+                        </div>
+
+                        <div class="guests-row">
+                            <span>Дети</span>
+                            <div class="guests-control">
+                                <button class="guest-btn" id="childrenMinus" aria-label="Уменьшить количество детей" disabled>−</button>
+                                <span class="guest-count" id="childrenCount">0</span>
+                                <button class="guest-btn" id="childrenPlus" aria-label="Увеличить количество детей">+</button>
+                            </div>
+                        </div>
+                        <div class="error-message" id="guestsError">Укажите количество гостей</div>
+                    </div>
+
+                    <!-- Дополнительные фильтры (чипсы) -->
+                    <div class="filters-section">
+                        <div class="filters-title">Дополнительные фильтры</div>
+                        <div class="chips-container">
+                            <span class="chip" data-filter="price" onclick="toggleChip(this)">💰 До 5 000 ₽</span>
+                            <span class="chip" data-filter="rating" onclick="toggleChip(this)">⭐ Рейтинг 4+</span>
+                            <span class="chip" data-filter="breakfast" onclick="toggleChip(this)">🥐 Завтрак включён</span>
+                            <span class="chip" data-filter="parking" onclick="toggleChip(this)">️ Парковка</span>
+                            <span class="chip" data-filter="wifi" onclick="toggleChip(this)">📶 Wi-Fi</span>
+                            <span class="chip" data-filter="spa" onclick="toggleChip(this)"> SPA</span>
+                        </div>
+                    </div>
+
+                    <!-- Кнопка поиска -->
+                    <button class="btn-primary" id="searchBtn" onclick="searchHotels()" disabled>
+                        Найти отели
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================
+             ЭКРАН 2: РЕЗУЛЬТАТЫ ПОИСКА
+             ======================================== -->
+        <section class="screen" id="screen-results" aria-label="Результаты поиска">
+            <!-- Сводка параметров поиска -->
+            <div class="search-summary">
+                <div>
+                    <h2 id="resultsTitle">Отели в Москве</h2>
+                    <div class="search-summary-info" id="resultsInfo">2 взрослых · 1 ночь</div>
+                </div>
+                <button class="edit-search-btn" onclick="goToScreen(0)">✏️ Изменить поиск</button>
+            </div>
+
+            <!-- Панель сортировки и фильтров -->
+            <div class="sort-filter-bar">
+                <select class="sort-select" id="sortSelect" onchange="sortHotels()">
+                    <option value="popular">По популярности</option>
+                    <option value="price-asc">Цена: по возрастанию</option>
+                    <option value="price-desc">Цена: по убыванию</option>
+                    <option value="rating">По рейтингу</option>
+                </select>
+                <span class="filter-chip-sm" onclick="toggleFilterChip(this)" data-f="free-cancel">Бесплатная отмена</span>
+                <span class="filter-chip-sm" onclick="toggleFilterChip(this)" data-f="breakfast">С завтраком</span>
+                <span class="filter-chip-sm" onclick="toggleFilterChip(this)" data-f="parking">С парковкой</span>
+            </div>
+
+            <!-- Список отелей -->
+            <div class="hotels-list" id="hotelsList">
+                <!-- Заполняется динамически -->
+            </div>
+
+            <!-- Состояния -->
+            <div class="state-container" id="loadingState" style="display:none;">
+                <div class="spinner"></div>
+                <div class="state-title">Ищем лучшие варианты...</div>
+                <div class="state-description">Это займёт несколько секунд</div>
+            </div>
+
+            <div class="state-container" id="emptyState" style="display:none;">
+                <div class="state-icon">🏨</div>
+                <div class="state-title">Нет доступных отелей</div>
+                <div class="state-description">Попробуйте изменить параметры поиска или выбрать другие даты</div>
+                <button class="btn-primary mt-16" onclick="goToScreen(0)" style="max-width:200px;">Изменить поиск</button>
+            </div>
+
+            <div class="state-container" id="errorState" style="display:none;">
+                <div class="state-icon">⚠️</div>
+                <div class="state-title">Ошибка загрузки</div>
+                <div class="state-description">Не удалось загрузить список отелей. Проверьте подключение к интернету.</div>
+                <button class="btn-primary mt-16" onclick="searchHotels()" style="max-width:200px;">Повторить</button>
+            </div>
+        </section>
+
+        <!-- ========================================
+             ЭКРАН 3: КАРТОЧКА ОТЕЛЯ И ВЫБОР НОМЕРА
+             ======================================== -->
+        <section class="screen" id="screen-detail" aria-label="Выбор номера">
+            <!-- Навигация назад -->
+            <div class="nav-buttons" style="margin-bottom:16px;">
+                <button class="btn-secondary" onclick="goToScreen(1)">← Назад к списку</button>
+            </div>
+
+            <!-- Галерея отеля -->
+            <div class="hotel-detail-header">
+                <div class="hotel-detail-gallery">
+                    <img id="hotelMainImage" src="" alt="Фото отеля">
+                </div>
+                <div class="gallery-thumbnails" id="galleryThumbs">
+                    <!-- Заполняется динамически -->
+                </div>
+            </div>
+
+            <!-- Информация об отеле -->
+            <div class="hotel-detail-info">
+                <h2 id="hotelDetailName"></h2>
+                <div class="hotel-detail-rating">
+                    <span>⭐</span>
+                    <span id="hotelDetailRating"></span>
+                    <span style="color:var(--color-text-light); font-weight:400;" id="hotelDetailReviews"></span>
+                </div>
+                <div class="hotel-detail-address" id="hotelDetailAddress"></div>
+            </div>
+
+            <!-- Удобства -->
+            <div class="amenities-section">
+                <div class="amenities-title">Удобства</div>
+                <div class="amenities-grid" id="amenitiesGrid">
+                    <!-- Заполняется динамически -->
+                </div>
+            </div>
+
+            <!-- Доступные номера -->
+            <div class="rooms-section">
+                <div class="rooms-title">Доступные номера</div>
+                <div class="rooms-list-grid" id="roomsList">
+                    <!-- Заполняется динамически -->
+                </div>
+            </div>
+
+            <!-- Навигация -->
+            <div class="nav-buttons">
+                <button class="btn-secondary" onclick="goToScreen(1)">← Назад к списку отелей</button>
+            </div>
+        </section>
+
+        <!-- ========================================
+             ЭКРАН 4: ПОДТВЕРЖДЕНИЕ БРОНИРОВАНИЯ
+             ======================================== -->
+        <section class="screen" id="screen-confirmation" aria-label="Подтверждение бронирования">
+            <!-- Навигация назад -->
+            <div class="nav-buttons" style="margin-bottom:16px;">
+                <button class="btn-secondary" onclick="goToScreen(2)">← Назад к выбору номера</button>
+            </div>
+
+            <!-- Сводка бронирования -->
+            <div class="booking-summary">
+                <div class="booking-summary-title">Ваше бронирование</div>
+                <div class="booking-detail-row">
+                    <span class="booking-detail-label">Отель</span>
+                    <span class="booking-detail-value" id="confirmHotel"></span>
+                </div>
+                <div class="booking-detail-row">
+                    <span class="booking-detail-label">Номер</span>
+                    <span class="booking-detail-value" id="confirmRoom"></span>
+                </div>
+                <div class="booking-detail-row">
+                    <span class="booking-detail-label">Заезд</span>
+                    <span class="booking-detail-value" id="confirmCheckIn"></span>
+                </div>
+                <div class="booking-detail-row">
+                    <span class="booking-detail-label">Выезд</span>
+                    <span class="booking-detail-value" id="confirmCheckOut"></span>
+                </div>
+                <div class="booking-detail-row">
+                    <span class="booking-detail-label">Гости</span>
+                    <span class="booking-detail-value" id="confirmGuests"></span>
+                </div>
+                <div class="booking-total">
+                    <span>Итого</span>
+                    <span class="booking-total-value" id="confirmTotal"></span>
+                </div>
+            </div>
+
+            <!-- Контактные данные -->
+            <div class="contact-form">
+                <h3>Контактные данные</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="contactName">Имя</label>
+                        <input type="text" class="form-input" id="contactName" placeholder="Ваше имя">
+                        <div class="error-message" id="nameError">Введите имя</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="contactEmail">Email</label>
+                        <input type="email" class="form-input" id="contactEmail" placeholder="email@example.com">
+                        <div class="error-message" id="emailError">Введите корректный email</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="contactPhone">Телефон</label>
+                    <input type="tel" class="form-input" id="contactPhone" placeholder="+7 (999) 123-45-67">
+                    <div class="error-message" id="phoneError">Введите номер телефона</div>
+                </div>
+            </div>
+
+            <!-- Информация о гостях -->
+            <div class="contact-form">
+                <h3>Информация о гостях</h3>
+                <div class="guests-list" id="guestsList">
+                    <!-- Заполняется динамически -->
+                </div>
+                <button class="btn-add-guest" id="addGuestBtn" onclick="addGuest()">
+                    + Добавить гостя (макс. 4)
+                </button>
+            </div>
+
+            <!-- Чекбокс согласия -->
+            <div class="checkbox-row">
+                <input type="checkbox" id="agreeTerms">
+                <label for="agreeTerms">
+                    Я согласен с <a href="#" onclick="event.preventDefault(); showToast('Условия использования будут доступны позже', 'warning')">условиями использования</a>
+                    и <a href="#" onclick="event.preventDefault(); showToast('Политика конфиденциальности будет доступна позже', 'warning')">политикой конфиденциальности</a>
+                </label>
+            </div>
+
+            <!-- Кнопка подтверждения -->
+            <button class="btn-primary" id="confirmBtn" onclick="confirmBooking()" disabled>
+                Подтвердить бронирование
+            </button>
+        </section>
+    </main>
+
+    <!-- ============================================
+         МОДАЛЬНОЕ ОКНО УСПЕХА
+         ============================================ -->
+    <div class="success-overlay" id="successOverlay">
+        <div class="success-modal">
+            <div class="success-icon">✓</div>
+            <h3>Бронирование создано!</h3>
+            <p>Ваш номер успешно забронирован. Подтверждение отправлено на ваш email.</p>
+            <div class="booking-number" id="bookingNumber">LA-2025-00000</div>
+            <button class="btn-primary" onclick="resetBooking()" style="margin-top:8px;">
+                На главную
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================
+         JAVASCRIPT: ЛОГИКА ПРИЛОЖЕНИЯ
+         ============================================ -->
+    <script>
+    /* ============================================
+       ДЕМО-ДАННЫЕ (MOCK DATA)
+       Измените здесь данные отелей, номеров, изображений
+       ============================================ */
+
+    // URL изображений (сгенерированные)
+    const IMAGES = {
+        hotel1: 'https://image.qwenlm.ai/public_source/cae03249-104f-42c1-a27c-597bec3180ce/10fcb2c4f-8404-4119-a586-e35688050e77.png',
+        hotel2: 'https://image.qwenlm.ai/public_source/cae03249-104f-42c1-a27c-597bec3180ce/12f624da3-f74b-4962-9a78-de366645dfff.png',
+        room1: 'https://image.qwenlm.ai/public_source/cae03249-104f-42c1-a27c-597bec3180ce/10aa23911-f82c-435a-a620-0bb0147c79af.png',
+        room2: 'https://image.qwenlm.ai/public_source/cae03249-104f-42c1-a27c-597bec3180ce/13aba1f8e-cb0c-4639-8368-06c1665e6d4d.png'
+    };
+
+    // Данные отелей по городам
+    // Чтобы добавить новый город, добавьте ключ в объект HOTELS_DATA
+    const HOTELS_DATA = {
+        moscow: [
+            {
+                id: 'm1',
+                name: 'Lauberge GA Москва Центр',
+                rating: 4.8,
+                reviews: 342,
+                address: 'ул. Тверская, 15, Москва',
+                price: 5200,
+                tags: ['Центр города', 'Метро рядом'],
+                amenities: ['Wi-Fi', 'Завтрак', 'SPA', 'Парковка', 'Фитнес', 'Ресторан'],
+                image: IMAGES.hotel1,
+                images: [IMAGES.hotel1, IMAGES.hotel2, IMAGES.room1, IMAGES.room2]
+            },
+            {
+                id: 'm2',
+                name: 'Lauberge GA Арбат',
+                rating: 4.6,
+                reviews: 218,
+                address: 'ул. Арбат, 28, Москва',
+                price: 4800,
+                tags: ['Исторический район', 'Бутик'],
+                amenities: ['Wi-Fi', 'Завтрак', 'Бар', 'Консьерж'],
+                image: IMAGES.hotel2,
+                images: [IMAGES.hotel2, IMAGES.hotel1, IMAGES.room2, IMAGES.room1]
+            },
+            {
+                id: 'm3',
+                name: 'Lauberge GA Патриарший',
+                rating: 4.9,
+                reviews: 156,
+                address: 'Патриарший мост, 2, Москва',
+                price: 7500,
+                tags: ['Люкс', 'Вид на реку'],
+                amenities: ['Wi-Fi', 'Завтрак', 'SPA', 'Бассейн', 'Парковка', 'Ресторан', 'Фитнес'],
+                image: IMAGES.hotel1,
+                images: [IMAGES.room1, IMAGES.hotel1, IMAGES.hotel2, IMAGES.room2]
+            },
+            {
+                id: 'm4',
+                name: 'Lauberge GA Парк',
+                rating: 4.5,
+                reviews: 189,
+                address: 'Ленинградский проспект, 36, Москва',
+                price: 3900,
+                tags: ['Рядом с парком', 'Семейный'],
+                amenities: ['Wi-Fi', 'Завтрак', 'Парковка', 'Детская комната'],
+                image: IMAGES.hotel2,
+                images: [IMAGES.hotel2, IMAGES.room2, IMAGES.hotel1, IMAGES.room1]
+            },
+            {
+                id: 'm5',
+                name: 'Lauberge GA Сити',
+                rating: 4.7,
+                reviews: 267,
+                address: 'Пресненская наб., 10, Москва',
+                price: 6200,
+                tags: ['Бизнес-центр', 'Панорамный вид'],
+                amenities: ['Wi-Fi', 'Завтрак', 'SPA', 'Фитнес', 'Бар', 'Консьерж'],
+                image: IMAGES.hotel1,
+                images: [IMAGES.room1, IMAGES.hotel2, IMAGES.room2, IMAGES.hotel1]
+            }
+        ],
+        spb: [
+            {
+                id: 's1',
+                name: 'Lauberge GA Невский',
+                rating: 4.7,
+                reviews: 298,
+                address: 'Невский проспект, 54, Санкт-Петербург',
+                price: 4500,
+                tags: ['Невский проспект', 'Центр'],
+                amenities: ['Wi-Fi', 'Завтрак', 'SPA', 'Ресторан', 'Бар'],
+                image: IMAGES.hotel2,
+                images: [IMAGES.hotel2, IMAGES.hotel1, IMAGES.room1, IMAGES.room2]
+            },
+            {
+                id: 's2',
+                name: 'Lauberge GA Дворцовый',
+                rating: 4.9,
+                reviews: 412,
+                address: 'Дворцовая набережная, 12, Санкт-Петербург',
+                price: 8200,
+                tags: ['Вид на Неву', 'Премиум'],
+                amenities: ['Wi-Fi', 'Завтрак', 'SPA', 'Бассейн', 'Парковка', 'Ресторан', 'Фитнес', 'Консьерж'],
+                image: IMAGES.hotel1,
+                images: [IMAGES.hotel1, IMAGES.room1, IMAGES.hotel2, IMAGES.room2]
+            },
+            {
+                id: 's3',
+                name: 'Lauberge GA Петербургский',
+                rating: 4.4,
+                reviews: 167,
+                address: 'ул. Чайковского, 22, Санкт-Петербург',
+                price: 3800,
+                tags: ['Тихий район', 'Уютный'],
+                amenities: ['Wi-Fi', 'Завтрак', 'Парковка'],
+                image: IMAGES.hotel2,
+                images: [IMAGES.room2, IMAGES.hotel2, IMAGES.hotel1, IMAGES.room1]
+            },
+            {
+                id: 's4',
+                name: 'Lauberge GA Васильевский',
+                rating: 4.6,
+                reviews: 203,
+                address: '6-я линия В.О., 15, Санкт-Петербург',
+                price: 4100,
+                tags: ['Васильевский остров', 'Музеи рядом'],
+                amenities: ['Wi-Fi', 'Завтрак', 'Бар', 'Консьерж'],
+                image: IMAGES.hotel1,
+                images: [IMAGES.hotel1, IMAGES.hotel2, IMAGES.room2, IMAGES.room1]
+            },
+            {
+                id: 's5',
+                name: 'Lauberge GA Петроградский',
+                rating: 4.8,
+                reviews: 189,
+                address: 'Каменноостровский проспект, 8, Санкт-Петербург',
+                price: 5500,
+                tags: ['Петроградская сторона', 'Бутик'],
+                amenities: ['Wi-Fi', 'Завтрак', 'SPA', 'Фитнес', 'Ресторан'],
+                image: IMAGES.hotel2,
+                images: [IMAGES.room1, IMAGES.hotel1, IMAGES.hotel2, IMAGES.room2]
+            }
+        ],
+        kostroma: [
+            {
+                id: 'k1',
+                name: 'Lauberge GA Кострома Центр',
+                rating: 4.5,
+                reviews: 124,
+                address: 'ул. Советская, 10, Кострома',
+                price: 2800,
+                tags: ['Исторический центр', 'Волга'],
+                amenities: ['Wi-Fi', 'Завтрак', 'Парковка', 'Ресторан'],
+                image: IMAGES.hotel1,
+                images: [IMAGES.hotel1, IMAGES.hotel2, IMAGES.room1, IMAGES.room2]
+            },
+            {
+                id: 'k2',
+                name: 'Lauberge GA Волжский',
+                rating: 4.6,
+                reviews: 98,
+                address: 'Набережная Волги, 5, Кострома',
+                price: 3200,
+                tags: ['На берегу Волги', 'Вид'],
+                amenities: ['Wi-Fi', 'Завтрак', 'SPA', 'Ресторан', 'Бар'],
+                image: IMAGES.hotel2,
+                images: [IMAGES.hotel2, IMAGES.hotel1, IMAGES.room2, IMAGES.room1]
+            },
+            {
+                id: 'k3',
+                name: 'Lauberge GA Торговые ряды',
+                rating: 4.3,
+                reviews: 87,
+                address: 'ул. Островского, 3, Кострома',
+                price: 2400,
+                tags: ['Рядом с рынком', 'Эконом'],
+                amenities: ['Wi-Fi', 'Завтрак'],
+                image: IMAGES.hotel1,
+                images: [IMAGES.room1, IMAGES.hotel1, IMAGES.hotel2, IMAGES.room2]
+            },
+            {
+                id: 'k4',
+                name: 'Lauberge GA Ипатьевский',
+                rating: 4.7,
+                reviews: 112,
+                address: 'ул. 1 Мая, 2, Кострома',
+                price: 3000,
+                tags: ['Близко к монастырю', 'Спокойный'],
+                amenities: ['Wi-Fi', 'Завтрак', 'Парковка', 'Бар'],
+                image: IMAGES.hotel2,
+                images: [IMAGES.hotel2, IMAGES.room2, IMAGES.hotel1, IMAGES.room1]
+            },
+            {
+                id: 'k5',
+                name: 'Lauberge GA Золотое кольцо',
+                rating: 4.4,
+                reviews: 76,
+                address: 'ул. Ленина, 18, Кострома',
+                price: 2600,
+                tags: ['Золотое кольцо', 'Туризм'],
+                amenities: ['Wi-Fi', 'Завтрак', 'Парковка'],
+                image: IMAGES.hotel1,
+                images: [IMAGES.hotel1, IMAGES.room1, IMAGES.hotel2, IMAGES.room2]
+            }
+        ],
+        kazan: [
+            {
+                id: 'ka1',
+                name: 'Lauberge GA Казанский Кремль',
+                rating: 4.8,
+                reviews: 234,
+                address: 'ул. Кремлёвская, 2, Казань',
+                price: 4200,
+                tags: ['Кремль рядом', 'Центр'],
+                amenities: ['Wi-Fi', 'Завтрак', 'SPA', 'Ресторан', 'Парковка'],
+                image: IMAGES.hotel1,
+                images: [IMAGES.hotel1, IMAGES.hotel2, IMAGES.room1, IMAGES.room2]
+            },
+            {
+                id: 'ka2',
+                name: 'Lauberge GA Старо-Татарская',
+                rating: 4.5,
+                reviews: 156,
+                address: 'ул. Каюма Насыри, 14, Казань',
+                price: 3500,
+                tags: ['Исторический район', 'Культура'],
+                amenities: ['Wi-Fi', 'Завтрак', 'Бар', 'Консьерж'],
+                image: IMAGES.hotel2,
+                images: [IMAGES.hotel2, IMAGES.hotel1, IMAGES.room2, IMAGES.room1]
+            },
+            {
+                id: 'ka3',
+                name: 'Lauberge GA Набережная',
+                rating: 4.7,
+                reviews: 198,
+                address: 'ул. Марселя Салимжанова, 1, Казань',
+                price: 4800,
+                tags: ['Набережная Казанки', 'Вид'],
+                amenities: ['Wi-Fi', 'Завтрак', 'SPA', 'Фитнес', 'Ресторан'],
+                image: IMAGES.hotel1,
+                images: [IMAGES.room1, IMAGES.hotel1, IMAGES.hotel2, IMAGES.room2]
+            },
+            {
+                id: 'ka4',
+                name: 'Lauberge GA Университетский',
+                rating: 4.3,
+                reviews: 112,
+                address: 'ул. Университетская, 7, Казань',
+                price: 3000,
+                tags: ['Рядом с КФУ', 'Бюджетный'],
+                amenities: ['Wi-Fi', 'Завтрак'],
+                image: IMAGES.hotel2,
+                images: [IMAGES.hotel2, IMAGES.room2, IMAGES.hotel1, IMAGES.room1]
+            },
+            {
+                id: 'ka5',
+                name: 'Lauberge GA Ривьера',
+                rating: 4.6,
+                reviews: 178,
+                address: 'ул. Фатыха Амирхана, 1, Казань',
+                price: 5000,
+                tags: ['Аквапарк', 'Развлечения'],
+                amenities: ['Wi-Fi', 'Завтрак', 'SPA', 'Бассейн', 'Ресторан', 'Парковка'],
+                image: IMAGES.hotel1,
+                images: [IMAGES.hotel1, IMAGES.room1, IMAGES.hotel2, IMAGES.room2]
+            }
+        ]
+    };
+
+    // Данные номеров для каждого отеля
+    // Ключ = id отеля, значение = массив номеров
+    const ROOMS_DATA = {
+        m1: [
+            { id: 'm1r1', name: 'Стандарт', conditions: ['Завтрак включён', 'Бесплатная отмена'], price: 5200, breakfast: true, freeCancel: true },
+            { id: 'm1r2', name: 'Комфорт', conditions: ['Завтрак включён', 'Бесплатная отмена', 'Вид на город'], price: 7200, breakfast: true, freeCancel: true },
+            { id: 'm1r3', name: 'Делюкс', conditions: ['Завтрак включён', 'Бесплатная отмена', 'Вид на Тверскую'], price: 9500, breakfast: true, freeCancel: true },
+            { id: 'm1r4', name: 'Семейный', conditions: ['Завтрак включён', 'Бесплатная отмена', '2 спальни'], price: 11000, breakfast: true, freeCancel: true },
+            { id: 'm1r5', name: 'Люкс', conditions: ['Завтрак включён', 'SPA-доступ', 'Вид на Кремль'], price: 15000, breakfast: true, freeCancel: false }
+        ],
+        m2: [
+            { id: 'm2r1', name: 'Стандарт', conditions: ['Завтрак включён', 'Бесплатная отмена'], price: 4800, breakfast: true, freeCancel: true },
+            { id: 'm2r2', name: 'Супериор', conditions: ['Завтрак включён', 'Балкон'], price: 6500, breakfast: true, freeCancel: true },
+            { id: 'm2r3', name: 'Комфорт', conditions: ['Завтрак включён', 'Бесплатная отмена', 'Вид на Арбат'], price: 7800, breakfast: true, freeCancel: true },
+            { id: 'm2r4', name: 'Делюкс', conditions: ['Завтрак включён', 'Джакузи'], price: 10500, breakfast: true, freeCancel: false },
+            { id: 'm2r5', name: 'Президентский', conditions: ['Завтрак включён', 'SPA', 'Панорамный вид'], price: 18000, breakfast: true, freeCancel: false }
+        ],
+        m3: [
+            { id: 'm3r1', name: 'Стандарт', conditions: ['Завтрак включён', 'Бесплатная отмена'], price: 7500, breakfast: true, freeCancel: true },
+            { id: 'm3r2', name: 'Комфорт+', conditions: ['Завтрак включён', 'Вид на реку'], price: 10000, breakfast: true, freeCancel: true },
+            { id: 'm3r3', name: 'Делюкс', conditions: ['Завтрак включён', 'Бесплатная отмена', 'Терраса'], price: 13500, breakfast: true, freeCancel: true },
+            { id: 'm3r4', name: 'Сьют', conditions: ['Завтрак включён', 'SPA', 'Бассейн'], price: 18000, breakfast: true, freeCancel: false },
+            { id: 'm3r5', name: 'Пентхаус', conditions: ['Завтрак включён', 'Персональный консьерж', 'Панорама'], price: 35000, breakfast: true, freeCancel: false }
+        ],
+        m4: [
+            { id: 'm4r1', name: 'Стандарт', conditions: ['Завтрак включён', 'Бесплатная отмена'], price: 3900, breakfast: true, freeCancel: true },
+            { id: 'm4r2', name: 'Комфорт', conditions: ['Завтрак включён', 'Вид на парк'], price: 5200, breakfast: true, freeCancel: true },
+            { id: 'm4r3', name: 'Семейный', conditions: ['Завтрак включён', 'Детская комната', '2 кровати'], price: 6500, breakfast: true, freeCancel: true },
+            { id: 'm4r4', name: 'Делюкс', conditions: ['Завтрак включён', 'Балкон', 'Вид на парк'], price: 8000, breakfast: true, freeCancel: true },
+            { id: 'm4r5', name: 'Люкс', conditions: ['Завтрак включён', 'Гостиная', 'Терраса'], price: 12000, breakfast: true, freeCancel: false }
+        ],
+        m5: [
+            { id: 'm5r1', name: 'Стандарт', conditions: ['Завтрак включён', 'Бесплатная отмена'], price: 6200, breakfast: true, freeCancel: true },
+            { id: 'm5r2', name: 'Бизнес', conditions: ['Завтрак включён', 'Рабочий стол', 'Вид на Сити'], price: 8500, breakfast: true, freeCancel: true },
+            { id: 'm5r3', name: 'Комфорт+', conditions: ['Завтрак включён', 'Панорамное окно'], price: 10000, breakfast: true, freeCancel: true },
+            { id: 'm5r4', name: 'Делюкс', conditions: ['Завтрак включён', 'SPA-доступ', 'Вид на реку'], price: 14000, breakfast: true, freeCancel: false },
+            { id: 'm5r5', name: 'Президентский', conditions: ['Завтрак включён', 'Джакузи', 'Панорама 360°'], price: 25000, breakfast: true, freeCancel: false }
+        ],
+        // Для остальных городов используем универсальный набор
+        _default: [
+            { id: 'r1', name: 'Стандарт', conditions: ['Завтрак включён', 'Бесплатная отмена'], price: 3000, breakfast: true, freeCancel: true },
+            { id: 'r2', name: 'Комфорт', conditions: ['Завтрак включён', 'Бесплатная отмена'], price: 4500, breakfast: true, freeCancel: true },
+            { id: 'r3', name: 'Делюкс', conditions: ['Завтрак включён', 'Вид на город'], price: 6500, breakfast: true, freeCancel: true },
+            { id: 'r4', name: 'Семейный', conditions: ['Завтрак включён', '2 спальни'], price: 8000, breakfast: true, freeCancel: true },
+            { id: 'r5', name: 'Люкс', conditions: ['Завтрак включён', 'SPA-доступ'], price: 12000, breakfast: true, freeCancel: false }
+        ]
+    };
+
+    // Заполняем недостающие отели данными по умолчанию
+    ['s1','s2','s3','s4','s5','k1','k2','k3','k4','k5','ka1','ka2','ka3','ka4','ka5'].forEach((id, i) => {
+        if (!ROOMS_DATA[id]) {
+            ROOMS_DATA[id] = ROOMS_DATA._default.map((room, ri) => ({
+                ...room,
+                id: id + 'r' + (ri + 1),
+                price: room.price + (i * 200)
+            }));
+        }
+    });
+
+    /* ============================================
+       СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+       Данные хранятся в памяти и сохраняются в localStorage
+       ============================================ */
+    const appState = {
+        currentScreen: 0,
+        search: {
+            city: '',
+            checkIn: '',
+            checkOut: '',
+            adults: 1,
+            children: 0,
+            filters: []
+        },
+        selectedHotel: null,
+        selectedRoom: null,
+        guests: [],
+        contact: { name: '', email: '', phone: '' }
+    };
+
+    /* ============================================
+       ИНИЦИАЛИЗАЦИЯ
+       ============================================ */
+    document.addEventListener('DOMContentLoaded', function() {
+        // Восстановление состояния из localStorage
+        loadState();
+
+        // Установка минимальной даты (сегодня)
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('checkIn').min = today;
+        document.getElementById('checkOut').min = today;
+
+        // Если есть сохранённые даты, подставляем их
+        if (appState.search.checkIn) {
+            document.getElementById('checkIn').value = appState.search.checkIn;
+            document.getElementById('checkOut').min = appState.search.checkIn;
+        }
+        if (appState.search.checkOut) {
+            document.getElementById('checkOut').value = appState.search.checkOut;
+        }
+        if (appState.search.city) {
+            document.getElementById('citySelect').value = appState.search.city;
+        }
+
+        // Обработчики изменения количества гостей
+        document.getElementById('adultsMinus').addEventListener('click', () => changeGuests('adults', -1));
+        document.getElementById('adultsPlus').addEventListener('click', () => changeGuests('adults', 1));
+        document.getElementById('childrenMinus').addEventListener('click', () => changeGuests('children', -1));
+        document.getElementById('childrenPlus').addEventListener('click', () => changeGuests('children', 1));
+
+        // Обработчики для валидации формы поиска
+        document.getElementById('citySelect').addEventListener('change', validateSearchForm);
+        document.getElementById('checkIn').addEventListener('change', function() {
+            document.getElementById('checkOut').min = this.value;
+            validateSearchForm();
+        });
+        document.getElementById('checkOut').addEventListener('change', validateSearchForm);
+
+        // Обработчики контактной формы
+        ['contactName', 'contactEmail', 'contactPhone'].forEach(function(id) {
+            document.getElementById(id).addEventListener('input', validateConfirmationForm);
+        });
+        document.getElementById('agreeTerms').addEventListener('change', validateConfirmationForm);
+
+        // Обновляем отображение
+        updateGuestsDisplay();
+        updateStepIndicator(0);
+    });
+
+    /* ============================================
+       УПРАВЛЕНИЕ КОЛИЧЕСТВОМ ГОСТЕЙ
+       ============================================ */
+    function changeGuests(type, delta) {
+        if (type === 'adults') {
+            appState.search.adults = Math.max(1, Math.min(10, appState.search.adults + delta));
+            document.getElementById('adultsCount').textContent = appState.search.adults;
+            document.getElementById('adultsMinus').disabled = appState.search.adults <= 1;
+        } else {
+            appState.search.children = Math.max(0, Math.min(6, appState.search.children + delta));
+            document.getElementById('childrenCount').textContent = appState.search.children;
+            document.getElementById('childrenMinus').disabled = appState.search.children <= 0;
+        }
+        validateSearchForm();
+        saveState();
+    }
+
+    function updateGuestsDisplay() {
+        document.getElementById('adultsCount').textContent = appState.search.adults;
+        document.getElementById('childrenCount').textContent = appState.search.children;
+        document.getElementById('adultsMinus').disabled = appState.search.adults <= 1;
+        document.getElementById('childrenMinus').disabled = appState.search.children <= 0;
+    }
+
+    /* ============================================
+       ВАЛИДАЦИЯ ФОРМЫ ПОИСКА
+       ============================================ */
+    function validateSearchForm() {
+        const city = document.getElementById('citySelect').value;
+        const checkIn = document.getElementById('checkIn').value;
+        const checkOut = document.getElementById('checkOut').value;
+        const btn = document.getElementById('searchBtn');
+
+        const isValid = city && checkIn && checkOut && appState.search.adults > 0;
+        btn.disabled = !isValid;
+        return isValid;
+    }
+
+    /* ============================================
+       ПЕРЕКЛЮЧЕНИЕ ФИЛЬТРОВ (ЧИПСЫ)
+       ============================================ */
+    function toggleChip(el) {
+        el.classList.toggle('active');
+        // Обновляем фильтры в состоянии
+        const filter = el.dataset.filter;
+        const idx = appState.search.filters.indexOf(filter);
+        if (idx > -1) {
+            appState.search.filters.splice(idx, 1);
+        } else {
+            appState.search.filters.push(filter);
+        }
+    }
+
+    function toggleFilterChip(el) {
+        el.classList.toggle('active');
+    }
+
+    /* ============================================
+       ПОИСК ОТЕЛЕЙ (ЭКРАН 1 → ЭКРАН 2)
+       ============================================ */
+    function searchHotels() {
+        if (!validateSearchForm()) {
+            showToast('Заполните все обязательные поля', 'error');
+            return;
+        }
+
+        // Собираем данные поиска
+        appState.search.city = document.getElementById('citySelect').value;
+        appState.search.checkIn = document.getElementById('checkIn').value;
+        appState.search.checkOut = document.getElementById('checkOut').value;
+        saveState();
+
+        // Показываем экран результатов с состоянием loading
+        goToScreen(1);
+        showLoadingState();
+
+        // Имитация загрузки (1.5 секунды)
+        setTimeout(function() {
+            const hotels = HOTELS_DATA[appState.search.city] || [];
+
+            if (hotels.length === 0) {
+                showEmptyState();
+            } else {
+                // Имитация случайной ошибки (5% шанс)
+                if (Math.random() < 0.05) {
+                    showErrorState();
+                } else {
+                    renderHotels(hotels);
+                    showResultsContent();
+                    updateResultsSummary();
+                }
+            }
+        }, 1500);
+    }
+
+    /* ============================================
+       ОТРИСОВКА СПИСКА ОТЕЛЕЙ
+       ============================================ */
+    function renderHotels(hotels) {
+        const container = document.getElementById('hotelsList');
+        const cityNames = { moscow: 'Москве', spb: 'Санкт-Петербурге', kostroma: 'Костроме', kazan: 'Казани' };
+        const cityName = cityNames[appState.search.city] || appState.search.city;
+
+        container.innerHTML = hotels.map(function(hotel) {
+            return `
+                <article class="hotel-card" onclick="selectHotel('${hotel.id}')" tabindex="0" role="button" aria-label="Отель ${hotel.name}">
+                    <img class="hotel-card-image" src="${hotel.image}" alt="${hotel.name}" loading="lazy">
+                    <div class="hotel-card-content">
+                        <div class="hotel-card-header">
+                            <div class="hotel-card-name">${hotel.name}</div>
+                            <div class="hotel-rating">
+                                <span class="hotel-rating-star">⭐</span>
+                                ${hotel.rating}
+                            </div>
+                        </div>
+                        <div class="hotel-location"> ${hotel.address}</div>
+                        <div class="hotel-tags">
+                            ${hotel.tags.map(t => '<span class="hotel-tag">' + t + '</span>').join('')}
+                        </div>
+                        <div class="hotel-card-footer">
+                            <div class="hotel-price">
+                                от <strong>${hotel.price.toLocaleString('ru-RU')} ₽</strong> / ночь
+                            </div>
+                            <button class="btn-details" onclick="event.stopPropagation(); selectHotel('${hotel.id}')">Подробнее</button>
+                        </div>
+                    </div>
+                </article>
+            `;
+        }).join('');
+    }
+
+    function updateResultsSummary() {
+        const cityNames = { moscow: 'Москве', spb: 'Санкт-Петербурге', kostroma: 'Костроме', kazan: 'Казани' };
+        const cityName = cityNames[appState.search.city] || appState.search.city;
+        const nights = calculateNights();
+        const guestsText = appState.search.adults + ' взр.' + (appState.search.children > 0 ? ', ' + appState.search.children + ' дет.' : '');
+
+        document.getElementById('resultsTitle').textContent = 'Отели в ' + cityName;
+        document.getElementById('resultsInfo').textContent = guestsText + ' · ' + nights + ' ' + pluralize(nights, 'ночь', 'ночи', 'ночей');
+    }
+
+    /* ============================================
+       ВЫБОР ОТЕЛЯ (ЭКРАН 2 → ЭКРАН 3)
+       ============================================ */
+    function selectHotel(hotelId) {
+        const cityHotels = HOTELS_DATA[appState.search.city] || [];
+        const hotel = cityHotels.find(function(h) { return h.id === hotelId; });
+
+        if (!hotel) {
+            showToast('Отель не найден', 'error');
+            return;
+        }
+
+        appState.selectedHotel = hotel;
+        appState.selectedRoom = null;
+        saveState();
+
+        renderHotelDetail(hotel);
+        goToScreen(2);
+    }
+
+    function renderHotelDetail(hotel) {
+        // Основная информация
+        document.getElementById('hotelMainImage').src = hotel.image;
+        document.getElementById('hotelMainImage').alt = hotel.name;
+        document.getElementById('hotelDetailName').textContent = hotel.name;
+        document.getElementById('hotelDetailRating').textContent = hotel.rating;
+        document.getElementById('hotelDetailReviews').textContent = '(' + hotel.reviews + ' отзывов)';
+        document.getElementById('hotelDetailAddress').textContent = '📍 ' + hotel.address;
+
+        // Миниатюры галереи
+        const thumbsContainer = document.getElementById('galleryThumbs');
+        thumbsContainer.innerHTML = hotel.images.map(function(img, i) {
+            return '<img class="gallery-thumb' + (i === 0 ? ' active' : '') + '" src="' + img + '" alt="Фото ' + (i + 1) + '" onclick="changeMainImage(this.src, this)">';
+        }).join('');
+
+        // Удобства
+        const amenitiesIcons = {
+            'Wi-Fi': '📶', 'Завтрак': '🥐', 'SPA': '💆', 'Парковка': '🅿️',
+            'Фитнес': '💪', 'Ресторан': '🍽️', 'Бассейн': '🏊', 'Бар': '',
+            'Консьерж': '', 'Детская комната': '👶', 'Джакузи': '🛁'
+        };
+
+        const amenitiesGrid = document.getElementById('amenitiesGrid');
+        amenitiesGrid.innerHTML = hotel.amenities.map(function(a) {
+            return '<div class="amenity-item"><span class="amenity-icon">' + (amenitiesIcons[a] || '✦') + '</span>' + a + '</div>';
+        }).join('');
+
+        // Номера
+        const rooms = ROOMS_DATA[hotel.id] || ROOMS_DATA._default;
+        const nights = calculateNights();
+        const roomsContainer = document.getElementById('roomsList');
+        roomsContainer.innerHTML = rooms.map(function(room) {
+            const totalPrice = room.price * nights;
+            return `
+                <article class="room-card">
+                    <img class="room-card-image" src="${nights % 2 === 0 ? IMAGES.room1 : IMAGES.room2}" alt="${room.name}" loading="lazy">
+                    <div class="room-card-content">
+                        <div>
+                            <div class="room-card-name">${room.name}</div>
+                            <div class="room-card-conditions">
+                                ${room.conditions.map(function(c) {
+                                    let cls = '';
+                                    if (c.includes('Завтрак')) cls = 'breakfast';
+                                    if (c.includes('отмена')) cls = 'free-cancel';
+                                    return '<span class="condition-tag ' + cls + '">' + c + '</span>';
+                                }).join('')}
+                            </div>
+                        </div>
+                        <div class="room-card-footer">
+                            <div class="room-price">
+                                ${nights > 1 ? nights + ' ночей' : '1 ночь'}
+                                <strong>${totalPrice.toLocaleString('ru-RU')} ₽</strong>
+                            </div>
+                            <button class="btn-select-room" onclick="selectRoom('${room.id}', '${hotel.id}')">Выбрать</button>
+                        </div>
+                    </div>
+                </article>
+            `;
+        }).join('');
+    }
+
+    function changeMainImage(src, thumbEl) {
+        document.getElementById('hotelMainImage').src = src;
+        document.querySelectorAll('.gallery-thumb').forEach(function(t) { t.classList.remove('active'); });
+        thumbEl.classList.add('active');
+    }
+
+    /* ============================================
+       ВЫБОР НОМЕРА (ЭКРАН 3 → ЭКРАН 4)
+       ============================================ */
+    function selectRoom(roomId, hotelId) {
+        const rooms = ROOMS_DATA[hotelId] || ROOMS_DATA._default;
+        const room = rooms.find(function(r) { return r.id === roomId; });
+
+        if (!room) {
+            showToast('Номер не найден', 'error');
+            return;
+        }
+
+        appState.selectedRoom = room;
+
+        // Инициализация гостей
+        const totalGuests = appState.search.adults + appState.search.children;
+        appState.guests = [];
+        for (let i = 0; i < Math.min(totalGuests, 4); i++) {
+            appState.guests.push({ firstName: '', lastName: '' });
+        }
+
+        saveState();
+        renderConfirmation();
+        goToScreen(3);
+    }
+
+    function renderConfirmation() {
+        const hotel = appState.selectedHotel;
+        const room = appState.selectedRoom;
+        const nights = calculateNights();
+        const totalPrice = room.price * nights;
+
+        document.getElementById('confirmHotel').textContent = hotel.name;
+        document.getElementById('confirmRoom').textContent = room.name;
+        document.getElementById('confirmCheckIn').textContent = formatDate(appState.search.checkIn);
+        document.getElementById('confirmCheckOut').textContent = formatDate(appState.search.checkOut);
+
+        const guestsText = appState.search.adults + ' взр.' + (appState.search.children > 0 ? ', ' + appState.search.children + ' дет.' : '');
+        document.getElementById('confirmGuests').textContent = guestsText;
+        document.getElementById('confirmTotal').textContent = totalPrice.toLocaleString('ru-RU') + ' ₽';
+
+        // Рендер гостей
+        renderGuestsList();
+
+        // Восстановление контактных данных
+        document.getElementById('contactName').value = appState.contact.name || '';
+        document.getElementById('contactEmail').value = appState.contact.email || '';
+        document.getElementById('contactPhone').value = appState.contact.phone || '';
+
+        validateConfirmationForm();
+    }
+
+    function renderGuestsList() {
+        const container = document.getElementById('guestsList');
+        container.innerHTML = appState.guests.map(function(guest, i) {
+            return `
+                <div class="guest-item">
+                    <div class="guest-item-number">${i + 1}</div>
+                    <div class="guest-item-fields">
+                        <input type="text" placeholder="Фамилия" value="${guest.lastName}" onchange="updateGuest(${i}, 'lastName', this.value)" aria-label="Фамилия гостя ${i + 1}">
+                        <input type="text" placeholder="Имя" value="${guest.firstName}" onchange="updateGuest(${i}, 'firstName', this.value)" aria-label="Имя гостя ${i + 1}">
+                    </div>
+                    ${i > 0 ? '<button class="btn-remove-guest" onclick="removeGuest(' + i + ')" aria-label="Удалить гостя ' + (i + 1) + '">×</button>' : ''}
+                </div>
+            `;
+        }).join('');
+
+        // Показываем/скрываем кнопку добавления
+        const addBtn = document.getElementById('addGuestBtn');
+        addBtn.style.display = appState.guests.length >= 4 ? 'none' : 'block';
+    }
+
+    function updateGuest(index, field, value) {
+        if (appState.guests[index]) {
+            appState.guests[index][field] = value;
+            saveState();
+        }
+    }
+
+    function addGuest() {
+        if (appState.guests.length < 4) {
+            appState.guests.push({ firstName: '', lastName: '' });
+            renderGuestsList();
+            saveState();
+        }
+    }
+
+    function removeGuest(index) {
+        appState.guests.splice(index, 1);
+        renderGuestsList();
+        saveState();
+    }
+
+    /* ============================================
+       ВАЛИДАЦИЯ ФОРМЫ ПОДТВЕРЖДЕНИЯ
+       ============================================ */
+    function validateConfirmationForm() {
+        const name = document.getElementById('contactName').value.trim();
+        const email = document.getElementById('contactEmail').value.trim();
+        const phone = document.getElementById('contactPhone').value.trim();
+        const agree = document.getElementById('agreeTerms').checked;
+        const btn = document.getElementById('confirmBtn');
+
+        // Валидация email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailValid = emailRegex.test(email);
+
+        const isValid = name && emailValid && phone && agree;
+        btn.disabled = !isValid;
+
+        // Сохраняем контактные данные
+        appState.contact = { name: name, email: email, phone: phone };
+        saveState();
+
+        return isValid;
+    }
+
+    /* ============================================
+       ПОДТВЕРЖДЕНИЕ БРОНИРОВАНИЯ
+       ============================================ */
+    function confirmBooking() {
+        if (!validateConfirmationForm()) {
+            showToast('Заполните все обязательные поля и примите условия', 'error');
+            return;
+        }
+
+        // Генерируем номер бронирования
+        const bookingNum = 'LA-2025-' + Math.floor(10000 + Math.random() * 90000);
+        document.getElementById('bookingNumber').textContent = bookingNum;
+
+        // Показываем модальное окно успеха
+        document.getElementById('successOverlay').classList.add('active');
+
+        // Очищаем состояние
+        localStorage.removeItem('lauberge_booking_state');
+    }
+
+    function resetBooking() {
+        document.getElementById('successOverlay').classList.remove('active');
+
+        // Сброс всех данных
+        appState.currentScreen = 0;
+        appState.search = { city: '', checkIn: '', checkOut: '', adults: 1, children: 0, filters: [] };
+        appState.selectedHotel = null;
+        appState.selectedRoom = null;
+        appState.guests = [];
+        appState.contact = { name: '', email: '', phone: '' };
+
+        // Сброс форм
+        document.getElementById('citySelect').value = '';
+        document.getElementById('checkIn').value = '';
+        document.getElementById('checkOut').value = '';
+        document.getElementById('contactName').value = '';
+        document.getElementById('contactEmail').value = '';
+        document.getElementById('contactPhone').value = '';
+        document.getElementById('agreeTerms').checked = false;
+
+        updateGuestsDisplay();
+        validateSearchForm();
+        updateStepIndicator(0);
+        goToScreen(0);
+    }
+
+    /* ============================================
+       НАВИГАЦИЯ МЕЖДУ ЭКРАНАМИ
+       ============================================ */
+    function goToScreen(index) {
+        // Скрываем все экраны
+        document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+
+        // Показываем нужный экран
+        const screens = ['screen-search', 'screen-results', 'screen-detail', 'screen-confirmation'];
+        document.getElementById(screens[index]).classList.add('active');
+
+        appState.currentScreen = index;
+        updateStepIndicator(index);
+        saveState();
+
+        // Прокрутка наверх
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateStepIndicator(currentStep) {
+        const items = document.querySelectorAll('.step-item');
+        const lines = document.querySelectorAll('.step-line');
+
+        items.forEach(function(item, i) {
+            item.classList.remove('active', 'completed');
+            if (i < currentStep) {
+                item.classList.add('completed');
+            } else if (i === currentStep) {
+                item.classList.add('active');
+            }
+        });
+
+        lines.forEach(function(line, i) {
+            line.classList.remove('completed');
+            if (i < currentStep) {
+                line.classList.add('completed');
+            }
+        });
+    }
+
+    /* ============================================
+       СОСТОЯНИЯ: LOADING, EMPTY, ERROR
+       ============================================ */
+    function showLoadingState() {
+        document.getElementById('loadingState').style.display = 'flex';
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'none';
+        document.getElementById('hotelsList').style.display = 'none';
+        document.querySelector('.sort-filter-bar').style.display = 'none';
+    }
+
+    function showEmptyState() {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'flex';
+        document.getElementById('errorState').style.display = 'none';
+        document.getElementById('hotelsList').style.display = 'none';
+        document.querySelector('.sort-filter-bar').style.display = 'none';
+    }
+
+    function showErrorState() {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'flex';
+        document.getElementById('hotelsList').style.display = 'none';
+        document.querySelector('.sort-filter-bar').style.display = 'none';
+    }
+
+    function showResultsContent() {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'none';
+        document.getElementById('hotelsList').style.display = '';
+        document.querySelector('.sort-filter-bar').style.display = 'flex';
+    }
+
+    /* ============================================
+       СОРТИРОВКА ОТЕЛЕЙ
+       ============================================ */
+    function sortHotels() {
+        const sortValue = document.getElementById('sortSelect').value;
+        const cityHotels = HOTELS_DATA[appState.search.city] || [];
+        let sorted = [...cityHotels];
+
+        switch (sortValue) {
+            case 'price-asc':
+                sorted.sort(function(a, b) { return a.price - b.price; });
+                break;
+            case 'price-desc':
+                sorted.sort(function(a, b) { return b.price - a.price; });
+                break;
+            case 'rating':
+                sorted.sort(function(a, b) { return b.rating - a.rating; });
+                break;
+            default:
+                // По популярности — по количеству отзывов
+                sorted.sort(function(a, b) { return b.reviews - a.reviews; });
+        }
+
+        renderHotels(sorted);
+    }
+
+    /* ============================================
+       УТИЛИТЫ
+       ============================================ */
+    function calculateNights() {
+        if (!appState.search.checkIn || !appState.search.checkOut) return 1;
+        const start = new Date(appState.search.checkIn);
+        const end = new Date(appState.search.checkOut);
+        const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+        return Math.max(1, diff);
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+                       'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+        return date.getDate() + ' ' + months[date.getMonth()] + ' ' + date.getFullYear();
+    }
+
+    function pluralize(n, one, few, many) {
+        const mod10 = n % 10;
+        const mod100 = n % 100;
+        if (mod100 >= 11 && mod100 <= 19) return many;
+        if (mod10 === 1) return one;
+        if (mod10 >= 2 && mod10 <= 4) return few;
+        return many;
+    }
+
+    /* ============================================
+       TOAST-УВЕДОМЛЕНИЯ
+       ============================================ */
+    function showToast(message, type) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast ' + (type || 'success');
+        toast.textContent = message;
+        toast.setAttribute('role', 'alert');
+        container.appendChild(toast);
+
+        setTimeout(function() {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            toast.style.transition = 'all 0.3s ease';
+            setTimeout(function() { toast.remove(); }, 300);
+        }, 3000);
+    }
+
+    /* ============================================
+       LOCALSTORAGE: СОХРАНЕНИЕ / ЗАГРУЗКА
+       ============================================ */
+    function saveState() {
+        try {
+            localStorage.setItem('lauberge_booking_state', JSON.stringify(appState));
+        } catch (e) {
+            // Игнорируем ошибки localStorage
+        }
+    }
+
+    function loadState() {
+        try {
+            const saved = localStorage.getItem('lauberge_booking_state');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                // Восстанавливаем только данные поиска
+                if (parsed.search) {
+                    appState.search = { ...appState.search, ...parsed.search };
+                }
+                if (parsed.contact) {
+                    appState.contact = { ...appState.contact, ...parsed.contact };
+                }
+            }
+        } catch (e) {
+            // Игнорируем ошибки
+        }
+    }
+    </script>
+</body>
+</html>
+
