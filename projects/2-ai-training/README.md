@@ -50,8 +50,8 @@
 ### 📋 Требования и промпты
 - [Пример промптов для проектирования БД](requirements/Промпты%20по%20созданию%20БД.md)
 
-### 🖼️ Прототипы и MVP
-- <a href="https://costas-uri.github.io/Konstantin-Urikh/projects/2-ai-training/prototypes/4%20экрана%20с%20переходами.html">HTML-прототип сайта бронирования отелей (4 экрана)</a> (откроется в новой вкладке при клике с зажатой клавишей Ctrl/Cmd)
+### 🖼️ Прототипы и MVP (откроется в новой вкладке при клике с зажатой клавишей Ctrl/Cmd)
+- <a href="https://costas-uri.github.io/Konstantin-Urikh/projects/2-ai-training/prototypes/4%20экрана%20с%20переходами.html">HTML-прототип сайта бронирования отелей (4 экрана)</a> 
 - [MVP-приложение на Vercel](https://get-analyst.vercel.app/login.html) — демонстрационный доступ по запросу
 
 ### 🤖 Автоматизация и AI-агенты
