@@ -81,7 +81,7 @@
 
 - ✉️ Email: Konstantin@Urikh.org
 - 📱 Telegram: @CostasUri
-- 🐙 GitHub: [[https://github.com/Costas-Uri](https://github.com/Costas-Uri)](https://github.com/Costas-Uri/Konstantin-Urikh)
+- 🐙 GitHub: https://github.com/Costas-Uri/Konstantin-Urikh
 
 ---
 
