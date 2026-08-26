@@ -52,7 +52,7 @@
 
 ### 🖼️ Прототипы и MVP (откроется в новой вкладке при клике с зажатой клавишей Ctrl/Cmd)
 - <a href="https://costas-uri.github.io/Konstantin-Urikh/projects/2-ai-training/prototypes/4%20экрана%20с%20переходами.html">HTML-прототип сайта бронирования отелей (4 экрана)</a> 
-- [MVP-приложение на Vercel](https://get-analyst.vercel.app/login.html) — демонстрационный доступ по запросу
+- [MVP-приложение на Vercel](https://get-analyst.vercel.app/login.html) — пароль дам по запросу
 
 ### 🤖 Автоматизация и AI-агенты
 - [n8n-воркфлоу: автоматизация обработки данных](automation/n8n-workflow-screenshot.png) — пример настройки AI-агента в n8n для обработки резюме, поступающих на почту
