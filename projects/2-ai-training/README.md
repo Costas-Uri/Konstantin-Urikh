@@ -51,7 +51,7 @@
 - [Пример промптов для проектирования БД](requirements/Промпты%20по%20созданию%20БД.md)
 
 ### 🖼️ Прототипы и MVP
-- [HTML-прототип сайта бронирования отелей (4 экрана)](prototypes/4%20экрана%20с%20переходами.html)
+- [HTML-прототип сайта бронирования отелей (4 экрана)]([prototypes/4%20экрана%20с%20переходами.html](https://htmlpreview.github.io/?url=github.com/Costas-Uri/Konstantin-Urikh/blob/main/projects/2-ai-training/prototypes/4%20экрана%20с%20переходами.html))
 - [MVP-приложение на Vercel](https://get-analyst.vercel.app/login.html) — демонстрационный доступ по запросу
 
 ### 🤖 Автоматизация и AI-агенты
