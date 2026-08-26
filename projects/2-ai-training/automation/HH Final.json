@@ -1,0 +1,1423 @@
+{
+  "name": "HH Final",
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.subject.toLowerCase().includes('подписке') || $json.subject.toLowerCase().includes('подходящ') }}",
+                    "rightValue": "аканси",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "269161cf-25d1-4f1c-8ca6-be3ec4262576"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Вакансии"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "34f52695-a2f2-42da-9c9d-68fe37cc1ddb",
+                    "leftValue": "={{ $json.subject.toLowerCase().includes('тклик') || $json.subject.toLowerCase().includes('аботодател') || $json.subject.toLowerCase().includes('написали') }}",
+                    "rightValue": "=аботадател",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ответ"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c4023cf2-4716-4e81-a524-d644bee39033",
+                    "leftValue": "={{ $json.headers[\"x-spam\"] }}",
+                    "rightValue": "=undefined",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Иное"
+            }
+          ]
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        496,
+        752
+      ],
+      "id": "f584ee09-e3d2-4862-b99b-c96849a670bc",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Извлекаем все ID вакансий из HTML письма\nconst html = $input.first().json.textHtml;\nconst vacancyIds = [];\n\n// Регулярное выражение для поиска ссылок на вакансии\nconst regex = /hh\\.ru\\/vacancy\\/(\\d+)/g;\nlet match;\n\nwhile ((match = regex.exec(html)) !== null) {\n  vacancyIds.push(match[1]);\n}\n\n// Удаляем дубликаты\nconst uniqueIds = [...new Set(vacancyIds)];\n\n// Возвращаем массив объектов с ID вакансий\nreturn uniqueIds.map(id => ({\n  json: {\n    vacancy_id: id,\n    message_id: $input.first().json['message-id'],\n    subject: $input.first().json.subject,\n    html: html\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        560
+      ],
+      "id": "19488876-215c-47db-a005-24d70cbd9c3e",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "dataPropertyName": "html",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "vacancy_title",
+              "cssSelector": "a[href*=\"hh.ru/vacancy/\"]"
+            },
+            {
+              "key": "salary",
+              "cssSelector": ".salary ИЛИ [class*=\"salary\"] ИЛИ .compensation"
+            },
+            {
+              "key": "description",
+              "cssSelector": "body",
+              "skipSelectors": "img, .header, .footer, .unsubscribe"
+            },
+            {
+              "key": "vacancy_url",
+              "cssSelector": "a[href*=\"hh.ru/vacancy/\"]",
+              "returnValue": "attribute",
+              "attribute": "href"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        832,
+        560
+      ],
+      "id": "bc2917c5-f133-46c1-838d-25b4d306fce3",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Получаем текст письма и дату СТРОГО из предыдущей ноды (Switch)\nconst inputItem = $input.first();\nconst description = inputItem.json.description || inputItem.json.html || inputItem.json.text || '';\nconst lines = description.split('\\n');\n\n// 2. Берем дату из ноды Switch (первый item, так как все вакансии из одного письма)\nlet formattedDate = 'Дата не найдена';\n\ntry {\n  const switchData = $('Switch').first(); // Берем ПЕРВЫЙ item из Switch\n  const rawDate = switchData.json.date;\n\n  if (rawDate) {\n    const dateObj = new Date(rawDate);\n    if (!isNaN(dateObj.getTime())) {\n      const parts = dateObj.toLocaleString('en-CA', { \n        timeZone: 'Europe/Simferopol',\n        year: 'numeric', month: '2-digit', day: '2-digit',\n        hour: '2-digit', minute: '2-digit', hour12: false\n      }).split(', ');\n      formattedDate = `${parts[0]} ${parts[1]}`;\n    } else {\n      formattedDate = `Ошибка парсинга: ${rawDate}`;\n    }\n  }\n} catch (e) {\n  formattedDate = `Ошибка: ${e.message}`;\n}\n// 3. Инициализируем массив результатов и Set для уникальных ID\nconst vacancies = [];\nconst seenUrls = new Set();\nconst urlRegex = /https:\\/\\/hh\\.ru\\/vacancy\\/(\\d+)/g;\nlet match;\n\nwhile ((match = urlRegex.exec(description)) !== null) {\n  const vacancyId = match[1];\n  \n  if (seenUrls.has(vacancyId)) continue;\n  seenUrls.add(vacancyId);\n\n  let title = '';\n  let salary = 'Не указана';\n  let company = '';\n  let location = '';\n  let isRemote = false;\n\n  for (let i = 0; i < lines.length; i++) {\n    if (lines[i].includes(`vacancy/${vacancyId}`)) {\n      \n      // --- Ищем НАЗВАНИЕ (смотрим 1-3 строки НАЗАД) ---\n      for (let j = i - 1; j >= Math.max(0, i - 4); j--) {\n        const prev = lines[j].trim();\n        if (prev && \n            !prev.includes('hh.ru') && \n            !prev.includes('Посмотреть') && \n            !prev.includes('Новые вакансии') && \n            !prev.includes('От проверенных')) {\n          title = prev;\n          break;\n        }\n      }\n\n      // --- Ищем ЗП, КОМПАНИЮ и ЛОКАЦИЮ (смотрим до 6 строк ВПЕРЁД) ---\n      let foundCompany = false;\n      for (let j = i + 1; j < Math.min(lines.length, i + 8); j++) {\n        const next = lines[j].trim();\n        \n        if (next.includes('Посмотреть вакансию') || next.includes('hh.ru/vacancy')) {\n          break;\n        }\n        if (!next) continue;\n\n        if (next.includes('Можно удалённо') || next.includes('Можно удаленно')) {\n          isRemote = true;\n          continue;\n        }\n\n        if (!foundCompany && (next.includes('₽') || next.includes('$') || next.includes('€') || next.includes('за месяц') || next.includes('за день') || next.includes('от ') || next.includes('до '))) {\n          salary = next;\n          continue;\n        }\n\n        if (!foundCompany) {\n          company = next;\n          foundCompany = true;\n        } else if (!location) {\n          location = next;\n          break;\n        }\n      }\n      break;\n    }\n  }\n\n  if (vacancyId && title) {\n    vacancies.push({\n      json: {\n        Date: formattedDate,\n        Vacancy_ID: vacancyId,\n        Vacancy_Title: title,\n        Vacancy_URL: `https://hh.ru/vacancy/${vacancyId}`,\n        Salary: salary,\n        Company: company,\n        Status: 'New'          \n      }\n    });\n  }\n}\n\nconsole.log(`Успешно извлечено уникальных вакансий: ${vacancies.length}`);\nreturn vacancies;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        560
+      ],
+      "id": "480df01b-4ab7-4def-afa2-51032c545a51",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "qwen-plus",
+          "mode": "list",
+          "cachedResultName": "qwen-plus"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        816,
+        1072
+      ],
+      "id": "782bd069-fc07-4fba-ae60-b5799bc78f8b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "sNsqMl3jFubbwYkZ",
+          "name": "Qwen DashScope"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1168,
+        560
+      ],
+      "id": "581765fd-cab3-47b2-bbd1-e6ace7ec8fd6",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "model": "deepseek-v4-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        560,
+        -144
+      ],
+      "id": "96b4c602-c92d-481e-86ce-2b57dc67a34a",
+      "name": "DeepSeek Chat Model",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "fHJL961mkdKsTO9G",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1FRWGtJHnDCBpjNsm_BngKaQCmuZJDTNP0X8_bGlzCSY",
+          "mode": "list",
+          "cachedResultName": "HH_AutoApply_Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FRWGtJHnDCBpjNsm_BngKaQCmuZJDTNP0X8_bGlzCSY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FRWGtJHnDCBpjNsm_BngKaQCmuZJDTNP0X8_bGlzCSY/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Vacancy_ID ",
+              "lookupValue": "={{ $json.Vacancy_ID }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1664,
+        512
+      ],
+      "id": "f2c17340-b6f1-45ee-a7af-f94a4d5fae2d",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VNWlOq2a1pFTdjAD",
+          "name": "Google Sheets - Konstantin HH"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1FRWGtJHnDCBpjNsm_BngKaQCmuZJDTNP0X8_bGlzCSY",
+          "mode": "list",
+          "cachedResultName": "HH_AutoApply_Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FRWGtJHnDCBpjNsm_BngKaQCmuZJDTNP0X8_bGlzCSY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FRWGtJHnDCBpjNsm_BngKaQCmuZJDTNP0X8_bGlzCSY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date ": "={{ $('IF NOT 1C').item.json.Date }}",
+            "Vacancy_ID ": "={{ $('IF NOT 1C').item.json.Vacancy_ID }}",
+            "Vacancy_Title ": "={{ $('IF NOT 1C').item.json.Vacancy_Title }}",
+            "Vacancy_URL ": "={{ $('IF NOT 1C').item.json.Vacancy_URL }}",
+            "Status ": "={{ $('Wait').item.json.Status }}",
+            "Company": "={{ $('IF NOT 1C').item.json.Company }}",
+            "Salary": "={{ $('IF NOT 1C').item.json.Salary }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date ",
+              "displayName": "Date ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Vacancy_ID ",
+              "displayName": "Vacancy_ID ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Vacancy_Title ",
+              "displayName": "Vacancy_Title ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Salary",
+              "displayName": "Salary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Vacancy_URL ",
+              "displayName": "Vacancy_URL ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Response_Type ",
+              "displayName": "Response_Type ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Response_Summary ",
+              "displayName": "Response_Summary ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Response_Date ",
+              "displayName": "Response_Date ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "useAppend": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1968,
+        608
+      ],
+      "id": "3c71ea7c-11e1-42a7-906f-e8f7b198ecfa",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VNWlOq2a1pFTdjAD",
+          "name": "Google Sheets - Konstantin HH"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1b2639df-c24f-4da5-bc6d-f879d874be94",
+              "leftValue": "={{ $json.Vacancy_Title }}",
+              "rightValue": "1C",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "d2b3da97-8169-4c1e-bf39-07c8b4255bc0",
+              "leftValue": "={{ $json.Vacancy_Title }}",
+              "rightValue": "1С",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1360,
+        528
+      ],
+      "id": "5f5dc5a6-75cf-4c97-a3ee-ed48bda8ae09",
+      "name": "IF NOT 1C"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f94e90c7-0b88-4b7a-bb8d-066ee871713a",
+              "leftValue": "={{ $json.row_number }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1808,
+        592
+      ],
+      "id": "ab423f43-f14c-49cb-b8e9-b52badb437b2",
+      "name": "If Exists"
+    },
+    {
+      "parameters": {
+        "jsCode": "const emailItem = $input.first();\nconst rawEmailText = emailItem.json.description || emailItem.json.html || emailItem.json.text || '';\nconst subject = emailItem.json.subject || '';\nconst date = emailItem.json.date || new Date().toISOString();\n\n// 1. Извлекаем ID вакансии из URL в письме\nconst vacancyMatch = rawEmailText.match(/hh\\.ru\\/vacancy\\/(\\d+)/);\nconst vacancyId = vacancyMatch ? vacancyMatch[1] : '';\n\n// 2. Функция для жесткой очистки HTML от мусора\nfunction cleanHtml(html) {\n  if (!html) return '';\n  return html\n    // Удаляем блоки скриптов и стилей целиком (они самые тяжелые)\n    .replace(/<script\\b[^<]*(?:(?!<\\/script>)<[^<]*)*<\\/script>/gi, '')\n    .replace(/<style\\b[^<]*(?:(?!<\\/style>)<[^<]*)*<\\/style>/gi, '')\n    // Удаляем все остальные HTML-теги\n    .replace(/<[^>]+>/g, ' ')\n    // Заменяем HTML-сущности\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    // Схлопываем множественные пробелы и переносы строк в один пробел\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nconst cleanText = cleanHtml(rawEmailText);\n\n// 3. Извлекаем суть ответа. \n// Берем 1500 символов чистого текста после приветствия. Этого хватит, чтобы понять: приглашение, отказ или уточнение.\nconst responseMatch = cleanText.match(/(?:Здравствуйте|Добрый день|Уважаемый|Коллеги|Доброе утро)[\\s\\S]{0,1500}/i);\nconst responseText = responseMatch ? responseMatch[0].trim() : cleanText.substring(0, 1500);\n\nreturn {\n  json: {\n    vacancy_id: vacancyId,\n    response_date: date,\n    email_subject: subject,\n    // В LLM передаем ТОЛЬКО этот чистый, короткий текст\n    email_body_clean: responseText,\n    // На всякий случай сохраняем чуть больше чистого текста, если понадобится для отладки\n    full_clean_text: cleanText.substring(0, 3000) \n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        896
+      ],
+      "id": "c86f2115-5117-4fc7-b61e-4852678536e2",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3.5-flash-02-23",
+        "options": {
+          "maxRetries": 2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        416,
+        -144
+      ],
+      "id": "cc08152c-cddd-4ed1-afb1-24a0c000d0cf",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "TRtKB2pV0KPmpei6",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Анализируй сообщение \nТема {{ $json.email_subject }}\nТекст {{ $json.email_body_clean }}\nИдентификатор {{ $json.vacancy_id }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Ты — HR-аналитик. Твоя задача — классифицировать ответ работодателя на отклик кандидата.\nОпредели тип ответа из списка:\n1. **Приглашение** — приглашение на собеседование, звонок, встречу\n2. **Отказ** — явный отказ, вакансия закрыта, не подходим\n3. **Уточнение** — просьба уточнить информацию, прислать портфолио, пройти тест\n4. **Другое** — всё остальное\nВерни строго JSON:\n{\n\"company\": \"Наименование компании\",\n\"vacancy_id\": \"ID вакансии\",\n\"vacancy_title\": \"Вакансия\",\n  \"response_type\": \"Приглашение/Отказ/Уточнение/Другое\",\n  \"status\": \"Interview/Rejected/Clarification/Other\",\n  \"summary\": \"Краткое содержание ответа (1-2 предложения)\"\n}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        832,
+        896
+      ],
+      "id": "32a9e14c-b6e0-41e3-820f-0bd9dca143f2",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"company\": \"String\",\n  \"response_type\": \"String\",\n  \"status\": \"String\",\n  \"summary\": \"String\",\n  \"vacancy_id\": \"String\",\n  \"vacancy_title\": \"String\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        976,
+        1072
+      ],
+      "id": "f5d4a979-c720-48e9-8aab-9870da17c253",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1FRWGtJHnDCBpjNsm_BngKaQCmuZJDTNP0X8_bGlzCSY",
+          "mode": "list",
+          "cachedResultName": "HH_AutoApply_Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FRWGtJHnDCBpjNsm_BngKaQCmuZJDTNP0X8_bGlzCSY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FRWGtJHnDCBpjNsm_BngKaQCmuZJDTNP0X8_bGlzCSY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Vacancy_ID ": "={{ $json.output.vacancy_id }}",
+            "Status ": "={{ $('Basic LLM Chain1').item.json.output.status }}",
+            "Response_Date ": "={{ DateTime.fromISO($('Code in JavaScript4').item.json.response_date).setZone('Europe/Moscow').toFormat('yyyy-MM-dd HH:mm') }}",
+            "Response_Type ": "={{ $json.output.response_type }}",
+            "Response_Summary ": "={{ $json.output.summary }}",
+            "Company": "={{ $json.output.company }}",
+            "Vacancy_Title ": "={{ $json.output.vacancy_title }}"
+          },
+          "matchingColumns": [
+            "Vacancy_ID "
+          ],
+          "schema": [
+            {
+              "id": "Date ",
+              "displayName": "Date ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Vacancy_ID ",
+              "displayName": "Vacancy_ID ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Vacancy_Title ",
+              "displayName": "Vacancy_Title ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Salary",
+              "displayName": "Salary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Vacancy_URL ",
+              "displayName": "Vacancy_URL ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status ",
+              "displayName": "Status ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Response_Type ",
+              "displayName": "Response_Type ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Response_Summary ",
+              "displayName": "Response_Summary ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Response_Date ",
+              "displayName": "Response_Date ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1376,
+        832
+      ],
+      "id": "70b86768-955d-4432-a233-bea986ba7ac0",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VNWlOq2a1pFTdjAD",
+          "name": "Google Sheets - Konstantin HH"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1536,
+        512
+      ],
+      "id": "fc97763c-19da-4f48-8ff9-e89ae20250cf",
+      "name": "Wait",
+      "webhookId": "c6d77848-e77f-4e64-92e3-a0622f3dec4f"
+    },
+    {
+      "parameters": {
+        "fromEmail": "Konstantin@Urikh.org",
+        "toEmail": "TG-Konstantin@urikh.org",
+        "subject": "={{ $json.subject }} ",
+        "emailFormat": "text",
+        "text": "=Обработано записей: {{ $json.vacancy_count }}\n\nПосмотреть итоговый файл можно тут: \nhttps://docs.google.com/spreadsheets/d/1FRWGtJHnDCBpjNsm_BngKaQCmuZJDTNP0X8_bGlzCSY/edit?gid=0#gid=0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1520,
+        368
+      ],
+      "id": "785a240b-8ea7-4a9e-b8a8-9247937aea5e",
+      "name": "Send email",
+      "webhookId": "75e5f4d5-24b0-40a3-af0e-21d0a7d77304",
+      "credentials": {
+        "smtp": {
+          "id": "fOhPw16Ot0FboQBK",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "   // Собираем все вакансии в один текст\n   const vacancies = items.map(item => \n     `• ${item.json.title}\\n  ${item.json.url}`\n   ).join('\\n\\n');\n   \n   return [{\n     json: {\n       subject: `Обработаны вакансии: ${items.length} шт.`,\n       body: `Найдено ${items.length} вакансий:\\n\\n${vacancies}`,\n       vacancy_count: items.length\n     }\n   }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        368
+      ],
+      "id": "a0c84154-c70a-4c54-9040-ed51f4c32bf0",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "fromEmail": "Konstantin@Urikh.org",
+        "toEmail": "TG-Konstantin@urikh.org",
+        "subject": "={{ $json['Response_Type '] }} от {{ $json.Company }}",
+        "emailFormat": "text",
+        "text": "={{ $json.Company }}\n{{ $json[\"Vacancy_Title \"] }}\n\n{{ $json['Response_Summary '] }}\n\n\nПосмотреть итоговый файл можно тут: \nhttps://docs.google.com/spreadsheets/d/1FRWGtJHnDCBpjNsm_BngKaQCmuZJDTNP0X8_bGlzCSY/edit?gid=0#gid=0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1552,
+        832
+      ],
+      "id": "9c799884-4cdc-49dc-8e05-09cb3211142b",
+      "name": "Send email1",
+      "webhookId": "75e5f4d5-24b0-40a3-af0e-21d0a7d77304",
+      "credentials": {
+        "smtp": {
+          "id": "fOhPw16Ot0FboQBK",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 5,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        272,
+        896
+      ],
+      "id": "a4ecf679-eee6-45d9-a787-7951ffcca8be",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "fromEmail": "Konstantin@Urikh.org",
+        "toEmail": "TG-Konstantin@urikh.org",
+        "subject": "=Вакансии: {{ $json.output.response_type }}",
+        "emailFormat": "text",
+        "text": "={{ $json.output.company }}\n\n{{ $json.output.vacancy_title }}\n\n{{ $json.output.summary }}\n\nВ итоговый файл ничего не записалось.\n\nНо посмотреть сам файл можно тут: https://docs.google.com/spreadsheets/d/1FRWGtJHnDCBpjNsm_BngKaQCmuZJDTNP0X8_bGlzCSY/edit?gid=0#gid=0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1392,
+        1024
+      ],
+      "id": "dce12404-eee5-4dfb-bbab-149034fd86ce",
+      "name": "Send email2",
+      "webhookId": "75e5f4d5-24b0-40a3-af0e-21d0a7d77304",
+      "credentials": {
+        "smtp": {
+          "id": "fOhPw16Ot0FboQBK",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9459f37d-a6f1-4d48-800b-75ec063f4b29",
+              "leftValue": "={{ $json.output.vacancy_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        896
+      ],
+      "id": "b6ea29e1-fce4-432c-9aa2-2f1fb67a0a81",
+      "name": "If Vacancy ID"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.subject }}",
+                    "rightValue": "аканси",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "269161cf-25d1-4f1c-8ca6-be3ec4262576"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Вакансии"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "34f52695-a2f2-42da-9c9d-68fe37cc1ddb",
+                    "leftValue": "={{ $json.subject.toLowerCase().includes('тклик') || $json.subject.toLowerCase().includes('аботодател') || $json.subject.toLowerCase().includes('написали') }}",
+                    "rightValue": "=аботадател",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ответ"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c4023cf2-4716-4e81-a524-d644bee39033",
+                    "leftValue": "={{ $json.headers[\"x-spam\"] }}",
+                    "rightValue": "=undefined",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Иное"
+            }
+          ]
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        160,
+        -160
+      ],
+      "id": "f114f825-a00c-4c5b-82f2-e33de27b95fb",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "options": {
+          "trackLastMessageId": false
+        }
+      },
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2.1,
+      "position": [
+        -288,
+        912
+      ],
+      "id": "cb4489e8-1f42-4ed6-9747-12b6e0289127",
+      "name": "const@urikh.org",
+      "credentials": {
+        "imap": {
+          "id": "4xTqywb20on36cI4",
+          "name": "IMAP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "postProcessAction": "nothing",
+        "format": "resolved",
+        "options": {
+          "forceReconnect": 10,
+          "trackLastMessageId": false
+        }
+      },
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2.1,
+      "position": [
+        -384,
+        -144
+      ],
+      "id": "19e7448a-b8c0-494b-a1b2-eba346edc394",
+      "name": "Mail.ru",
+      "credentials": {
+        "imap": {
+          "id": "efSFSxSExrzWrw3H",
+          "name": "mail.ru IMAP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "223de89d-00a9-4aa2-9118-b303305065ed",
+              "leftValue": "={{ $json.from }}",
+              "rightValue": "@hh.ru",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "63018e56-d2dd-4dfc-ac59-96d7ef9701aa",
+              "leftValue": "={{ $json.headers.from }}",
+              "rightValue": "@hh.ru",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "d3a77675-10e4-4e72-b232-df9400168ca3",
+              "leftValue": "={{ $json.from }}",
+              "rightValue": "=@career.habr.com",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "89edb595-4edd-4fbe-993d-71d04039097a",
+              "leftValue": "={{ $json.headers.from }}",
+              "rightValue": "@career.habr.com",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "79cf0214-b133-425e-8d26-1a79645d7bd8",
+              "leftValue": "={{ $json.from }}",
+              "rightValue": "superjob.ru",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "a4cea502-0881-4f6c-9bb0-f81394009164",
+              "leftValue": "={{ $json.headers.from }}",
+              "rightValue": "superjob.ru",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        64,
+        912
+      ],
+      "id": "0c31340c-8c59-48c6-9bef-df553f1f84fa",
+      "name": "If HH, Habr, superjob"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfor (const item of items) {\n  // Всегда перекодируем textHtml\n  if (item.json.textHtml) {\n    item.json.textHtml = Buffer.from(item.json.textHtml, 'latin1').toString('utf8');\n  }\n  \n  // Всегда перекодируем textPlain\n  if (item.json.textPlain) {\n    item.json.textPlain = Buffer.from(item.json.textPlain, 'latin1').toString('utf8');\n  }\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        912
+      ],
+      "id": "da606b4d-e108-45eb-8711-bf3e1bd3f15b",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Loop",
+      "typeVersion": 1,
+      "position": [
+        496,
+        976
+      ],
+      "id": "54feac8f-18d3-4275-844c-b5a167a72e20"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF NOT 1C",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "If Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF NOT 1C": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Exists": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "If Vacancy ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send email1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Vacancy ID": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send email2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "const@urikh.org": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mail.ru": {
+      "main": [
+        []
+      ]
+    },
+    "If HH, Habr, superjob": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "If HH, Habr, superjob",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionOrder": "v0",
+    "availableInMCP": false,
+    "errorWorkflow": "wMDDOWhWdZ6Eu7hG"
+  },
+  "versionId": "30ced7e5-4c6e-4a6c-bc62-169c45f77972",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "63c0fc97516768bad62380a2d2a2756bb8ceada3799078a0a791431c09f91d75"
+  },
+  "id": "wMDDOWhWdZ6Eu7hG",
+  "tags": []
+}
