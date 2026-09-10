@@ -56,7 +56,7 @@
 - [MVP-приложение на Vercel](https://get-analyst.vercel.app/login.html) — генератор UML диаграмм, пароль дам по запросу
 
 ### 🤖 Автоматизация и AI-агенты
-- [n8n-workflow: автоматизация обработки данных](automation/n8n-workflow-screenshot.png) — пример настройки AI-агента в n8n для обработки резюме, поступающих на почту
+- [n8n-workflow: автоматизация обработки данных](automation/n8n-workflow-screenshot new.png) — пример настройки AI-агента в n8n для обработки резюме, поступающих на почту
 
 ---
 
